@@ -291,7 +291,9 @@ Make content substantive and insightful. Vary the slide types throughout."""
                 supabase.table("creations").insert({
                     "user_id": user_id,
                     "type": "presentation",
-                    "prompt": req.prompt
+                    "prompt": req.prompt,
+                    "title": data.get("title", "Untitled"),
+                    "output": data,
                 }).execute()
             except Exception as e:
                 logger.error("Failed to save presentation for user %s: %s", user_id, e)
@@ -352,7 +354,9 @@ CRITICAL: Do NOT use HTML tags (like <h1>) or Markdown inside JSON values. Use p
                 supabase.table("creations").insert({
                     "user_id": user_id,
                     "type": "report",
-                    "prompt": req.prompt
+                    "prompt": req.prompt,
+                    "title": data.get("title", "Untitled"),
+                    "output": data,
                 }).execute()
             except Exception as e:
                 logger.error("Failed to save report for user %s: %s", user_id, e)

@@ -659,6 +659,27 @@ async function deleteFromLibrary(id) {
   }
 }
 
-function openFromLibrary(id, type) {
-  alert(`In a full implementation, this would fetch item ${id} and open the ${type} viewer.`);
+async function openFromLibrary(id, type) {
+  if (!supabaseClient) return;
+  try {
+    const { data, error } = await supabaseClient
+      .from('creations')
+      .select('output')
+      .eq('id', id)
+      .single();
+    if (error) throw error;
+    if (!data?.output) {
+      alert('This item was saved before output storage was enabled. Please regenerate it.');
+      return;
+    }
+    if (type === 'presentation') {
+      renderPresentation(data.output);
+      showScreen('presentation');
+    } else {
+      renderReport(data.output);
+      showScreen('report');
+    }
+  } catch (e) {
+    alert('Could not load item: ' + e.message);
+  }
 }

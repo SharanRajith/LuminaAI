@@ -26,6 +26,8 @@ create table creations (
   user_id    uuid        references auth.users not null,
   type       text        not null,
   prompt     text        not null,
+  title      text,
+  output     jsonb,
   created_at timestamptz default now() not null
 );
 
@@ -36,6 +38,12 @@ create policy "Users manage their own creations"
   on creations for all
   using (auth.uid() = user_id);
 ```
+
+> **Already ran the old schema?** Run this to add the missing columns:
+> ```sql
+> alter table creations add column if not exists title text;
+> alter table creations add column if not exists output jsonb;
+> ```
 
 4. (Optional) Enable Google / GitHub OAuth under **Authentication › Providers**.
 
