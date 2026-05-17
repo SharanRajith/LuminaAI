@@ -27,6 +27,9 @@ function showScreen(name) {
   document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
   const el = document.getElementById('screen-' + name);
   if (el) el.classList.add('active');
+  // Hide main navbar in immersive screens; show it everywhere else
+  const navbar = document.getElementById('navbar');
+  if (navbar) navbar.style.display = (name === 'presentation' || name === 'report') ? 'none' : '';
   window.scrollTo(0, 0);
 }
 
@@ -228,6 +231,9 @@ function renderPresentation(data) {
     wrap.appendChild(div);
   });
 
+  // Load background images asynchronously after slides are rendered
+  loadSlideImages(slides, wrap);
+
   const dots = document.getElementById('slide-dots');
   dots.innerHTML = '';
   slides.forEach((_, i) => {
@@ -242,6 +248,25 @@ function renderPresentation(data) {
 
   updateSlideCounter();
   updateNotes();
+}
+
+function loadSlideImages(slides, wrap) {
+  const slideEls = wrap.querySelectorAll('.slide');
+  slides.forEach((sd, i) => {
+    const topic = sd.title || sd.quote || '';
+    if (!topic || !slideEls[i]) return;
+    const encoded = encodeURIComponent(
+      `professional presentation slide about ${topic}, cinematic, minimal, high quality`
+    );
+    const url = `https://image.pollinations.ai/prompt/${encoded}?width=1280&height=720&nologo=true&seed=${i}`;
+    const img = new Image();
+    img.onload = () => {
+      slideEls[i].style.backgroundImage = `url('${url}')`;
+      slideEls[i].style.backgroundSize = 'cover';
+      slideEls[i].style.backgroundPosition = 'center';
+    };
+    img.src = url;
+  });
 }
 
 function buildSlideHTML(sd) {
