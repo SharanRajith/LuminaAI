@@ -556,7 +556,10 @@ async function handleSignup() {
     const { error } = await supabaseClient.auth.signUp({
       email,
       password,
-      options: { data: { first_name: firstName, last_name: lastName } },
+      options: {
+        data: { first_name: firstName, last_name: lastName },
+        emailRedirectTo: window.location.origin + window.location.pathname,
+      },
     });
     if (error) throw error;
     successEl.textContent   = 'Account created! Check your email to confirm, then log in.';
