@@ -1,0 +1,24 @@
+# Never include secrets or dev artifacts in the Docker image
+.env
+*.env
+
+# Python runtime junk
+__pycache__/
+*.py[cod]
+*.pyo
+
+# Virtual environments
+venv/
+env/
+.venv/
+
+# Test artifacts
+tests/
+.pytest_cache/
+.coverage
+htmlcov/
+test_export.pptx
+
+# IDE
+.vscode/
+.idea/

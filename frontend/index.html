@@ -1,0 +1,613 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Lumina AI — Presentation & Report Maker</title>
+  <meta name="description"
+    content="Create stunning AI-powered presentations and professional reports in seconds with Ollama." />
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link
+    href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&family=Playfair+Display:ital,wght@0,700;1,700&display=swap"
+    rel="stylesheet" />
+  <link rel="stylesheet" href="styles.css" />
+</head>
+
+<body>
+
+  <!-- Offline banner -->
+  <div id="offline-banner" class="offline-banner" hidden role="alert" aria-live="assertive">
+    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true">
+      <line x1="1" y1="1" x2="23" y2="23"/><path d="M16.72 11.06A10.94 10.94 0 0119 12.55M5 12.55a10.94 10.94 0 015.17-2.39M10.71 5.05A16 16 0 0122.56 9M1.42 9a15.91 15.91 0 014.7-2.88M8.53 16.11a6 6 0 016.95 0M12 20h.01"/>
+    </svg>
+    You're offline — reconnect to generate content.
+  </div>
+
+  <!-- ═══════════════════ NAV ═══════════════════ -->
+  <nav class="navbar" id="navbar" aria-label="Main navigation">
+    <div class="nav-brand" onclick="showScreen('home')" role="button" tabindex="0" aria-label="Lumina AI home">
+      <div class="nav-logo" aria-hidden="true">
+        <svg viewBox="0 0 36 36" fill="none" xmlns="http://www.w3.org/2000/svg">
+          <polygon points="18,2 34,11 34,25 18,34 2,25 2,11" fill="url(#lg1)" />
+          <polygon points="18,9 27,14 27,22 18,27 9,22 9,14" fill="rgba(255,255,255,0.15)" />
+          <circle cx="18" cy="18" r="4" fill="white" />
+          <defs>
+            <linearGradient id="lg1" x1="0" y1="0" x2="36" y2="36" gradientUnits="userSpaceOnUse">
+              <stop offset="0%" stop-color="#6c63ff" />
+              <stop offset="100%" stop-color="#ff6584" />
+            </linearGradient>
+          </defs>
+        </svg>
+      </div>
+      <span class="nav-name">Lumina <span>AI</span></span>
+    </div>
+    <div class="nav-links">
+      <button class="nav-btn" onclick="showScreen('home')">Home</button>
+      <button class="nav-btn" id="nav-library" onclick="showScreen('library'); loadLibrary();" style="display:none">Library</button>
+      <button class="nav-btn" id="nav-login" onclick="showScreen('auth')">Login / Sign Up</button>
+      <button class="nav-btn nav-btn-primary" onclick="navigateToCreate()">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" aria-hidden="true">
+          <path d="M12 5v14M5 12h14" />
+        </svg>
+        Create
+      </button>
+    </div>
+  </nav>
+
+  <!-- ═══════════════════ HOME ═══════════════════ -->
+  <div id="screen-home" class="screen active">
+    <section class="hero" aria-label="Hero">
+      <div class="hero-bg" aria-hidden="true">
+        <div class="orb orb-a"></div>
+        <div class="orb orb-b"></div>
+        <div class="orb orb-c"></div>
+        <div class="grid-lines"></div>
+      </div>
+      <div class="hero-left">
+        <div class="hero-badge">
+          <span class="badge-pulse" aria-hidden="true"></span>
+          Powered by Ollama
+        </div>
+        <h1 class="hero-title">
+          Create <em>Stunning</em><br />AI Presentations<br />
+          <span class="hero-title-2">&amp; Reports</span>
+        </h1>
+        <p class="hero-sub">
+          Transform any topic or document into a polished presentation or
+          professional report in seconds. Impress your audience every time.
+        </p>
+        <div class="hero-actions">
+          <button class="btn-cta" onclick="navigateToCreate()">
+            Start Creating
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" aria-hidden="true">
+              <path d="M5 12h14M12 5l7 7-7 7" />
+            </svg>
+          </button>
+          <button class="btn-ghost-cta"
+            onclick="document.getElementById('features').scrollIntoView({behavior:'smooth'})">
+            See Features
+          </button>
+        </div>
+        <div class="hero-pills" aria-label="Key features">
+          <div class="pill">⚡ 10× Faster</div>
+          <div class="pill">🎨 5 Themes</div>
+          <div class="pill">📥 PPTX Export</div>
+          <div class="pill">📄 Report Mode</div>
+        </div>
+      </div>
+      <div class="hero-right" aria-hidden="true">
+        <div class="deck-preview">
+          <div class="deck-card deck-3"></div>
+          <div class="deck-card deck-2"></div>
+          <div class="deck-card deck-1">
+            <div class="dp-label">SLIDE 1 OF 10</div>
+            <div class="dp-title">AI-Generated<br />Presentations</div>
+            <div class="dp-bar"></div>
+            <div class="dp-dots">
+              <span></span><span></span><span></span>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- Features -->
+    <section class="features-section" id="features" aria-labelledby="features-heading">
+      <div class="section-label">FEATURES</div>
+      <h2 class="section-title" id="features-heading">Everything You Need</h2>
+      <p class="section-sub">From blank canvas to polished output in one click</p>
+      <div class="features-grid">
+        <div class="feat-card">
+          <div class="feat-icon" style="--c:#6c63ff" aria-hidden="true">
+            <svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <rect x="2" y="3" width="20" height="14" rx="2" />
+              <path d="M8 21h8M12 17v4" />
+            </svg>
+          </div>
+          <h3>Slide Presentations</h3>
+          <p>Generate full slide decks with title, content, quote, stats, and agenda slides. Present in full-screen mode
+            with speaker notes.</p>
+        </div>
+        <div class="feat-card">
+          <div class="feat-icon" style="--c:#ff6584" aria-hidden="true">
+            <svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z" />
+              <polyline points="14 2 14 8 20 8" />
+              <line x1="16" y1="13" x2="8" y2="13" />
+              <line x1="16" y1="17" x2="8" y2="17" />
+            </svg>
+          </div>
+          <h3>Professional Reports</h3>
+          <p>Structured reports with executive summary, sections, key highlights, and actionable recommendations. Export
+            via browser print.</p>
+        </div>
+        <div class="feat-card">
+          <div class="feat-icon" style="--c:#43e6fc" aria-hidden="true">
+            <svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <circle cx="12" cy="12" r="10" />
+              <path d="M12 8v4l3 3" />
+            </svg>
+          </div>
+          <h3>Instant Generation</h3>
+          <p>AI crafts complete, substantive content in seconds. No templates, no placeholders — real insights tailored
+            to your topic.</p>
+        </div>
+        <div class="feat-card">
+          <div class="feat-icon" style="--c:#f9c846" aria-hidden="true">
+            <svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4" />
+              <polyline points="7 10 12 15 17 10" />
+              <line x1="12" y1="15" x2="12" y2="3" />
+            </svg>
+          </div>
+          <h3>PPTX Export</h3>
+          <p>Download your presentation as a native PowerPoint file, ready to edit, share, or present anywhere.
+            Dark-themed slides included.</p>
+        </div>
+        <div class="feat-card">
+          <div class="feat-icon" style="--c:#ff9f43" aria-hidden="true">
+            <svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <path d="M4 15s1-1 4-1 5 2 8 2 4-1 4-1V3s-1 1-4 1-5-2-8-2-4 1-4 1z" />
+              <line x1="4" y1="22" x2="4" y2="15" />
+            </svg>
+          </div>
+          <h3>5 Beautiful Themes</h3>
+          <p>Choose from Dark Pro, Ocean, Sunset, Emerald, and Corporate themes. Each with curated color palettes and
+            typography.</p>
+        </div>
+        <div class="feat-card">
+          <div class="feat-icon" style="--c:#a29bfe" aria-hidden="true">
+            <svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <path
+                d="M21 16V8a2 2 0 00-1-1.73l-7-4a2 2 0 00-2 0l-7 4A2 2 0 003 8v8a2 2 0 001 1.73l7 4a2 2 0 002 0l7-4A2 2 0 0021 16z" />
+            </svg>
+          </div>
+          <h3>Document Upload</h3>
+          <p>Upload a PDF, DOCX, or TXT file and let the AI extract and transform your existing content into slides or a
+            report.</p>
+        </div>
+      </div>
+    </section>
+
+    <!-- CTA Banner -->
+    <section class="cta-banner" aria-label="Call to action">
+      <div class="cta-banner-bg" aria-hidden="true"></div>
+      <h2>Ready to impress?</h2>
+      <p>Generate your first AI presentation in under 30 seconds.</p>
+      <button class="btn-cta" onclick="navigateToCreate()">
+        Get Started Free
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" aria-hidden="true">
+          <path d="M5 12h14M12 5l7 7-7 7" />
+        </svg>
+      </button>
+    </section>
+
+    <footer class="footer">
+      <p>Lumina AI &copy; 2025 &nbsp;·&nbsp; Built with Ollama &nbsp;·&nbsp; Processed locally</p>
+    </footer>
+  </div><!-- /screen-home -->
+
+  <!-- ═══════════════════ CREATE ═══════════════════ -->
+  <div id="screen-create" class="screen" role="main">
+    <div class="create-layout">
+      <!-- Left panel -->
+      <div class="create-panel">
+        <div class="panel-header">
+          <button class="back-btn" onclick="showScreen('home')" aria-label="Back to home">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true">
+              <path d="M19 12H5M12 5l-7 7 7 7" />
+            </svg>
+            Back
+          </button>
+          <h2>Create with AI</h2>
+          <p>Fill in the details and let AI do the heavy lifting</p>
+        </div>
+
+        <!-- Mode toggle -->
+        <div class="mode-toggle" id="mode-toggle" role="group" aria-label="Output mode">
+          <button class="mode-btn active" id="mode-pres" onclick="setMode('presentation')" aria-pressed="true">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true">
+              <rect x="2" y="3" width="20" height="14" rx="2" />
+              <path d="M8 21h8M12 17v4" />
+            </svg>
+            Presentation
+          </button>
+          <button class="mode-btn" id="mode-rep" onclick="setMode('report')" aria-pressed="false">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true">
+              <path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z" />
+              <polyline points="14 2 14 8 20 8" />
+            </svg>
+            Report
+          </button>
+        </div>
+
+        <!-- Topic / Prompt -->
+        <div class="form-group">
+          <label for="topic">Topic / Prompt</label>
+          <textarea id="topic" rows="3" maxlength="5000"
+            placeholder="e.g. The Future of Renewable Energy, Q3 Sales Analysis, Introduction to Machine Learning..."
+            oninput="updateCharCount(this)"></textarea>
+          <div class="topic-footer">
+            <div class="upload-row">
+              <label class="upload-label" for="doc-upload">
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true">
+                  <path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4" />
+                  <polyline points="7 10 12 15 17 10" />
+                  <line x1="12" y1="15" x2="12" y2="3" />
+                </svg>
+                Upload document
+              </label>
+              <input type="file" id="doc-upload" accept=".pdf,.docx,.txt" onchange="handleUpload(this)"
+                style="display:none" aria-label="Upload a document to use as prompt" />
+              <span id="upload-status" class="upload-status" role="status" aria-live="polite"></span>
+            </div>
+            <span id="char-count" class="char-count" aria-live="polite">0 / 5000</span>
+          </div>
+        </div>
+
+        <!-- Presentation options -->
+        <div id="pres-options">
+          <div class="form-row">
+            <div class="form-group">
+              <label for="slide-count">Number of Slides</label>
+              <select id="slide-count">
+                <option value="6">6 slides</option>
+                <option value="8">8 slides</option>
+                <option value="10" selected>10 slides</option>
+                <option value="12">12 slides</option>
+                <option value="15">15 slides</option>
+              </select>
+            </div>
+            <div class="form-group">
+              <label for="audience">Audience</label>
+              <select id="audience">
+                <option value="general">General</option>
+                <option value="executive">Executive</option>
+                <option value="technical">Technical</option>
+                <option value="student">Student</option>
+                <option value="expert">Expert</option>
+              </select>
+            </div>
+          </div>
+          <div class="form-group">
+            <label>Theme</label>
+            <div class="theme-picker" id="theme-picker" role="group" aria-label="Slide theme">
+              <div class="theme-opt active" data-theme="dark" onclick="selectTheme(this)" role="radio" aria-checked="true" tabindex="0" title="Dark Pro">
+                <div class="theme-swatch" style="background:linear-gradient(135deg,#0f0f23,#6c63ff)" aria-hidden="true"></div>
+                <span>Dark Pro</span>
+              </div>
+              <div class="theme-opt" data-theme="ocean" onclick="selectTheme(this)" role="radio" aria-checked="false" tabindex="0" title="Ocean">
+                <div class="theme-swatch" style="background:linear-gradient(135deg,#0a1628,#00d2ff)" aria-hidden="true"></div>
+                <span>Ocean</span>
+              </div>
+              <div class="theme-opt" data-theme="sunset" onclick="selectTheme(this)" role="radio" aria-checked="false" tabindex="0" title="Sunset">
+                <div class="theme-swatch" style="background:linear-gradient(135deg,#1a0a0a,#ff6584)" aria-hidden="true"></div>
+                <span>Sunset</span>
+              </div>
+              <div class="theme-opt" data-theme="emerald" onclick="selectTheme(this)" role="radio" aria-checked="false" tabindex="0" title="Emerald">
+                <div class="theme-swatch" style="background:linear-gradient(135deg,#031a10,#00c9a7)" aria-hidden="true"></div>
+                <span>Emerald</span>
+              </div>
+              <div class="theme-opt" data-theme="corporate" onclick="selectTheme(this)" role="radio" aria-checked="false" tabindex="0" title="Corporate">
+                <div class="theme-swatch" style="background:linear-gradient(135deg,#f8f9fa,#2563eb)" aria-hidden="true"></div>
+                <span>Corporate</span>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Report options -->
+        <div id="rep-options" style="display:none">
+          <div class="form-row">
+            <div class="form-group">
+              <label for="report-type">Report Type</label>
+              <select id="report-type">
+                <option value="business">Business</option>
+                <option value="academic">Academic</option>
+                <option value="technical">Technical</option>
+                <option value="marketing">Marketing</option>
+                <option value="research">Research</option>
+              </select>
+            </div>
+            <div class="form-group">
+              <label for="report-length">Length</label>
+              <select id="report-length">
+                <option value="short">Short (4-5 sections)</option>
+                <option value="medium" selected>Medium (6-8 sections)</option>
+                <option value="long">Long (9-12 sections)</option>
+              </select>
+            </div>
+          </div>
+        </div>
+
+        <!-- Tone — values match backend _VALID_TONES -->
+        <div class="form-group">
+          <label for="tone">Tone</label>
+          <select id="tone">
+            <option value="professional" selected>Professional</option>
+            <option value="casual">Casual</option>
+            <option value="academic">Academic</option>
+            <option value="inspirational">Inspirational</option>
+            <option value="humorous">Humorous</option>
+          </select>
+        </div>
+
+        <button class="btn-generate" id="btn-generate" onclick="generate()">
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" aria-hidden="true">
+            <path d="M13 2L3 14h9l-1 8 10-12h-9l1-8z" />
+          </svg>
+          Generate with AI
+        </button>
+        <div id="create-error" class="error-msg" style="display:none" role="alert"></div>
+      </div>
+
+      <!-- Right preview panel -->
+      <div class="create-preview" aria-hidden="true">
+        <div class="preview-placeholder">
+          <div class="pp-icon">
+            <svg width="56" height="56" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
+              <path d="M13 2L3 14h9l-1 8 10-12h-9l1-8z" />
+            </svg>
+          </div>
+          <h3>Your creation appears here</h3>
+          <p>Fill in the form and click <strong>Generate</strong> to see your AI-crafted presentation or report.</p>
+        </div>
+      </div>
+    </div>
+  </div><!-- /screen-create -->
+
+  <!-- ═══════════════════ LOADING ═══════════════════ -->
+  <div id="screen-loading" class="screen" role="status" aria-label="Generating content" aria-live="polite">
+    <div class="loading-center">
+      <div class="loading-logo" aria-hidden="true">
+        <svg viewBox="0 0 36 36" fill="none" xmlns="http://www.w3.org/2000/svg" width="64" height="64">
+          <polygon points="18,2 34,11 34,25 18,34 2,25 2,11" fill="url(#lg2)" />
+          <circle cx="18" cy="18" r="5" fill="white" opacity="0.9" />
+          <defs>
+            <linearGradient id="lg2" x1="0" y1="0" x2="36" y2="36" gradientUnits="userSpaceOnUse">
+              <stop offset="0%" stop-color="#6c63ff" />
+              <stop offset="100%" stop-color="#ff6584" />
+            </linearGradient>
+          </defs>
+        </svg>
+      </div>
+      <h2 class="loading-title">AI is crafting your <span id="loading-type">presentation</span>…</h2>
+      <div class="loading-bar-wrap" role="progressbar" aria-valuemin="0" aria-valuemax="100" aria-valuenow="0" id="loading-progress">
+        <div class="loading-bar" id="loading-bar"></div>
+      </div>
+      <div class="loading-steps" id="loading-steps" aria-label="Generation steps">
+        <div class="lstep active" id="lstep-0">Analysing your topic</div>
+        <div class="lstep" id="lstep-1">Structuring content</div>
+        <div class="lstep" id="lstep-2">Writing with AI</div>
+        <div class="lstep" id="lstep-3">Applying theme &amp; layout</div>
+        <div class="lstep" id="lstep-4">Finalising output</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ═══════════════════ PRESENTATION VIEWER ═══════════════════ -->
+  <div id="screen-presentation" class="screen" role="main" aria-label="Presentation viewer">
+    <div class="viewer-toolbar" role="toolbar" aria-label="Presentation controls">
+      <button class="tb-btn" onclick="showScreen('create')" aria-label="Back to create screen">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true">
+          <path d="M19 12H5M12 5l-7 7 7 7" />
+        </svg>
+        Back
+      </button>
+      <div class="tb-title" id="pres-title" aria-live="polite">Presentation</div>
+      <div class="tb-right">
+        <button class="tb-btn" id="notes-toggle" onclick="toggleNotes()" aria-pressed="false" aria-label="Toggle speaker notes">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true">
+            <path d="M11 4H4a2 2 0 00-2 2v14a2 2 0 002 2h14a2 2 0 002-2v-7" />
+            <path d="M18.5 2.5a2.121 2.121 0 013 3L12 15l-4 1 1-4 9.5-9.5z" />
+          </svg>
+          Notes
+        </button>
+        <button class="tb-btn" onclick="exportPPTX()" aria-label="Export presentation as PowerPoint file">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true">
+            <path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4" />
+            <polyline points="7 10 12 15 17 10" />
+            <line x1="12" y1="15" x2="12" y2="3" />
+          </svg>
+          Export PPTX
+        </button>
+        <button class="tb-btn tb-btn-fullscreen" onclick="toggleFullscreen()" aria-label="Toggle fullscreen">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true">
+            <path d="M8 3H5a2 2 0 00-2 2v3m18 0V5a2 2 0 00-2-2h-3m0 18h3a2 2 0 002-2v-3M3 16v3a2 2 0 002 2h3" />
+          </svg>
+          Fullscreen
+        </button>
+      </div>
+    </div>
+
+    <div class="slide-area" id="slide-area" role="region" aria-label="Slide content">
+      <div class="slide-wrap" id="slide-wrap" aria-live="polite">
+        <!-- Slides rendered here by JS -->
+      </div>
+      <button class="slide-nav-btn prev-btn" id="prev-btn" onclick="prevSlide()" aria-label="Previous slide">
+        <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" aria-hidden="true">
+          <path d="M15 18l-6-6 6-6" />
+        </svg>
+      </button>
+      <button class="slide-nav-btn next-btn" id="next-btn" onclick="nextSlide()" aria-label="Next slide">
+        <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" aria-hidden="true">
+          <path d="M9 18l6-6-6-6" />
+        </svg>
+      </button>
+    </div>
+
+    <div class="slide-footer">
+      <div class="slide-counter" id="slide-counter" aria-live="polite" aria-label="Slide position">1 / 10</div>
+      <div class="slide-dots" id="slide-dots" role="tablist" aria-label="Slide navigation dots"></div>
+      <div class="slide-thumb-count"></div>
+    </div>
+
+    <!-- Speaker notes -->
+    <div class="notes-panel" id="notes-panel" style="display:none" role="region" aria-label="Speaker notes">
+      <div class="notes-header">Speaker Notes</div>
+      <div class="notes-body" id="notes-body">No notes for this slide.</div>
+    </div>
+  </div><!-- /screen-presentation -->
+
+  <!-- ═══════════════════ REPORT VIEWER ═══════════════════ -->
+  <div id="screen-report" class="screen" role="main" aria-label="Report viewer">
+    <div class="report-toolbar" role="toolbar" aria-label="Report controls">
+      <button class="tb-btn" onclick="showScreen('create')" aria-label="Back to create screen">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true">
+          <path d="M19 12H5M12 5l-7 7 7 7" />
+        </svg>
+        Back
+      </button>
+      <div class="tb-title">Report Viewer</div>
+      <div class="tb-right">
+        <button class="tb-btn" onclick="window.print()" aria-label="Print or save as PDF">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true">
+            <polyline points="6 9 6 2 18 2 18 9" />
+            <path d="M6 18H4a2 2 0 01-2-2v-5a2 2 0 012-2h16a2 2 0 012 2v5a2 2 0 01-2 2h-2" />
+            <rect x="6" y="14" width="12" height="8" />
+          </svg>
+          Print / PDF
+        </button>
+      </div>
+    </div>
+
+    <div class="report-layout">
+      <aside class="report-toc" id="report-toc" aria-label="Table of contents">
+        <div class="toc-title">Contents</div>
+        <!-- Generated by JS -->
+      </aside>
+      <main class="report-body" id="report-body">
+        <!-- Generated by JS -->
+      </main>
+    </div>
+  </div><!-- /screen-report -->
+
+  <!-- ═══════════════════ AUTH ═══════════════════ -->
+  <div id="screen-auth" class="screen" role="main">
+    <div class="auth-box">
+      <h2>Welcome to Lumina AI</h2>
+      <p>Sign in or create an account to save your presentations.</p>
+      <div class="form-group">
+        <label for="auth-email">Email</label>
+        <input type="email" id="auth-email" placeholder="you@example.com" autocomplete="email" />
+      </div>
+      <div class="form-group">
+        <label for="auth-password">Password</label>
+        <input type="password" id="auth-password" placeholder="••••••••" autocomplete="current-password" />
+      </div>
+      <div class="auth-buttons" style="display: flex; gap: 10px; margin-top: 15px;">
+        <button class="btn-cta" onclick="handleAuth()">Log In</button>
+        <button class="btn-ghost-cta" onclick="showScreen('signup')">Sign Up</button>
+      </div>
+
+      <div class="auth-divider">
+        <span>OR</span>
+      </div>
+
+      <div class="social-login">
+        <button class="btn-social" onclick="handleOAuthLogin('google')">
+          <svg viewBox="0 0 24 24" width="20" height="20" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
+            <path d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z" fill="#4285F4" />
+            <path d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z" fill="#34A853" />
+            <path d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l2.85-2.22.81-.62z" fill="#FBBC05" />
+            <path d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z" fill="#EA4335" />
+          </svg>
+          Continue with Google
+        </button>
+        <button class="btn-social" onclick="handleOAuthLogin('github')">
+          <svg viewBox="0 0 24 24" width="20" height="20" fill="currentColor" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
+            <path d="M12 .297c-6.63 0-12 5.373-12 12 0 5.303 3.438 9.8 8.205 11.385.6.113.82-.258.82-.577 0-.285-.01-1.04-.015-2.04-3.338.724-4.042-1.61-4.042-1.61C4.422 18.07 3.633 17.7 3.633 17.7c-1.087-.744.084-.729.084-.729 1.205.084 1.838 1.236 1.838 1.236 1.07 1.835 2.809 1.305 3.495.998.108-.776.417-1.305.76-1.605-2.665-.3-5.466-1.332-5.466-5.93 0-1.31.465-2.38 1.235-3.22-.135-.303-.54-1.523.105-3.176 0 0 1.005-.322 3.3 1.23.96-.267 1.98-.399 3-.405 1.02.006 2.04.138 3 .405 2.28-1.552 3.285-1.23 3.285-1.23.645 1.653.24 2.873.12 3.176.765.84 1.23 1.91 1.23 3.22 0 4.61-2.805 5.625-5.475 5.92.42.36.81 1.096.81 2.22 0 1.606-.015 2.896-.015 3.286 0 .315.21.69.825.57C20.565 22.092 24 17.592 24 12.297c0-6.627-5.373-12-12-12" />
+          </svg>
+          Continue with GitHub
+        </button>
+      </div>
+
+      <div id="auth-error" class="error-msg" style="display:none; margin-top: 15px;" role="alert"></div>
+    </div>
+  </div>
+
+  <!-- ═══════════════════ SIGNUP ═══════════════════ -->
+  <div id="screen-signup" class="screen" role="main">
+    <div class="auth-box">
+      <h2>Create an Account</h2>
+      <p>Join Lumina AI to start creating presentations.</p>
+      <div style="display: flex; gap: 10px;">
+        <div class="form-group" style="flex: 1;">
+          <label for="signup-first-name">First Name</label>
+          <input type="text" id="signup-first-name" placeholder="John" autocomplete="given-name" />
+        </div>
+        <div class="form-group" style="flex: 1;">
+          <label for="signup-last-name">Last Name</label>
+          <input type="text" id="signup-last-name" placeholder="Doe" autocomplete="family-name" />
+        </div>
+      </div>
+      <div class="form-group">
+        <label for="signup-email">Email Address</label>
+        <input type="email" id="signup-email" placeholder="you@example.com" autocomplete="email" />
+      </div>
+      <div class="form-group">
+        <label for="signup-password">Password</label>
+        <input type="password" id="signup-password" placeholder="••••••••" autocomplete="new-password" />
+      </div>
+      <div class="form-group">
+        <label for="signup-confirm-password">Confirm Password</label>
+        <input type="password" id="signup-confirm-password" placeholder="••••••••" autocomplete="new-password" />
+      </div>
+      <div class="auth-buttons" style="margin-top: 15px;">
+        <button class="btn-cta" style="width: 100%;" onclick="handleSignup()">Create Account</button>
+      </div>
+      <div class="auth-divider">
+        <span>OR</span>
+      </div>
+      <div style="text-align: center; margin-top: 15px;">
+        <span style="color: rgba(255,255,255,0.7);">Already have an account?</span>
+        <a href="#" onclick="showScreen('auth'); return false;" style="color: #6c63ff; text-decoration: none; font-weight: 500;">Log In</a>
+      </div>
+      <div id="signup-error" class="error-msg" style="display:none; margin-top: 15px;" role="alert"></div>
+      <div id="signup-success" class="success-msg" style="display:none; margin-top: 15px;" role="status"></div>
+    </div>
+  </div>
+
+  <!-- ═══════════════════ LIBRARY ═══════════════════ -->
+  <div id="screen-library" class="screen" role="main">
+    <div class="library-layout" style="max-width: 1000px; margin: 40px auto; width: 100%; padding: 0 20px;">
+      <div class="panel-header" style="margin-bottom: 30px;">
+        <h2 style="font-size: 2rem; margin-bottom: 5px;">Your Library</h2>
+        <p style="color: rgba(255,255,255,0.6);">View and edit your saved presentations and reports.</p>
+      </div>
+      <div id="library-grid" class="library-grid"
+        style="display: grid; grid-template-columns: repeat(auto-fill, minmax(280px, 1fr)); gap: 20px;"
+        role="list" aria-live="polite">
+        <div style="color: rgba(255,255,255,0.5);">Please log in to view your library.</div>
+      </div>
+    </div>
+  </div>
+
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <script src="config.js"></script>
+  <script src="app.js"></script>
+</body>
+
+</html>

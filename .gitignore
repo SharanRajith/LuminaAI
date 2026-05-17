@@ -1,0 +1,27 @@
+# Secrets - never commit these
+.env
+*.env
+!.env.example
+
+# Python
+__pycache__/
+*.py[cod]
+venv/
+env/
+.venv/
+*.egg-info/
+dist/
+build/
+.pytest_cache/
+htmlcov/
+.coverage
+
+# IDE / local tooling
+.vscode/
+.idea/
+.claude/
+*.swp
+*.swo
+
+# Generated/demo files
+*.pptx
