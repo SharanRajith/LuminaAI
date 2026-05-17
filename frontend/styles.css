@@ -345,7 +345,9 @@ select option{background:var(--bg2)}
 .slide-img-swap-hint{position:absolute;bottom:0;left:0;right:0;padding:8px;background:rgba(0,0,0,.6);color:rgba(255,255,255,.7);font-size:.72rem;text-align:center;opacity:0;transition:opacity .2s}
 .slide-img-col:hover .slide-img-swap-hint{opacity:1}
 
-/* ── Responsive ── */
+/* ══════════ RESPONSIVE ══════════ */
+
+/* Tablet */
 @media(max-width:900px){
   .hero{flex-direction:column;padding:100px 5vw 60px;text-align:center}
   .hero-left{max-width:100%}
@@ -357,12 +359,67 @@ select option{background:var(--bg2)}
   .report-layout{grid-template-columns:1fr}
   .report-toc{display:none}
 }
-@media(max-width:600px){
-  .navbar{padding:0 16px}
-  .deck-preview{width:300px;height:220px}
-  .deck-1{width:280px;height:190px}
-  .slide{padding:28px 24px}
-  .slide-stats-grid{gap:16px}
+
+/* Mobile — slides stack, toolbar collapses to icons */
+@media(max-width:640px){
+  /* Nav */
+  .navbar{padding:0 16px;height:56px}
+  .nav-name{font-size:1rem}
+  .nav-btn:not(.nav-btn-primary){display:none}
+
+  /* Viewer toolbar — icon-only */
+  .viewer-toolbar,.report-toolbar{padding:0 10px;gap:4px;height:48px;overflow-x:auto;flex-wrap:nowrap}
+  .tb-btn{padding:6px 8px;font-size:.72rem;gap:4px;flex-shrink:0}
+  .tb-label{display:none}
+  .tb-title{font-size:.82rem;flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+
+  /* Slide viewer — stack split layouts vertically */
+  #screen-presentation{height:100dvh}
+  .slide-area{height:calc(100dvh - 48px - 44px)}
+  .slide.active{flex-direction:column}
+  .slide-text-col{flex:none;width:100%;padding:20px 20px 12px;justify-content:flex-start;overflow-y:auto}
+  .slide-text-col--full{padding:20px}
+  .slide-img-col{flex:none;width:100%;height:38%;min-height:120px;order:0 !important}
+  .slide-img-col--left{order:0 !important}
+  .slide-center-content{padding:24px 20px}
+
+  /* Font scale */
+  .slide-title-text{font-size:clamp(1.4rem,6vw,2.4rem)}
+  .slide-heading{font-size:clamp(1.1rem,4.5vw,1.6rem)}
+  .slide-bullets li{font-size:.9rem}
+  .slide-quote-text{font-size:clamp(1rem,4vw,1.4rem)}
+  .stat-val{font-size:clamp(1.6rem,7vw,2.8rem)}
+
+  /* Slide controls always visible on mobile (no hover) */
+  .slide-controls{opacity:1;pointer-events:auto;top:8px;right:8px;gap:4px}
+  .slide-ctrl-btn{padding:4px 7px;font-size:.68rem}
+
+  /* Footer */
+  .slide-footer{height:44px}
+  .slide-nav-btn{width:36px;height:36px}
+
+  /* Hero */
+  .hero{padding:80px 4vw 40px}
+  .hero h1{font-size:clamp(1.8rem,8vw,3rem)}
+
+  /* Create form */
+  .create-form{padding:20px}
+  .form-row{flex-direction:column}
+
+  /* Report */
+  .report-body{padding:20px 16px}
+  .report-main-title{font-size:1.6rem}
+
+  /* Deck preview */
+  .deck-preview{width:260px;height:180px}
+  .deck-1{width:240px;height:165px}
+}
+
+/* Very small phones */
+@media(max-width:380px){
+  .slide-text-col{padding:14px 14px 8px}
+  .slide-img-col{height:32%}
+  .slide-heading{font-size:1rem}
 }
 @media print{
   .report-toolbar,.report-toc{display:none!important}

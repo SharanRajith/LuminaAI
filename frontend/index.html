@@ -491,13 +491,17 @@
       </button>
       <div class="tb-title">Report Viewer</div>
       <div class="tb-right">
+        <button class="tb-btn" onclick="exportReportLatex()" aria-label="Download LaTeX source">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true">
+            <path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z"/><polyline points="14 2 14 8 20 8"/><path d="M9 13h3m-3 4h6"/>
+          </svg>
+          <span class="tb-label">LaTeX</span>
+        </button>
         <button class="tb-btn" onclick="window.print()" aria-label="Print or save as PDF">
           <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true">
-            <polyline points="6 9 6 2 18 2 18 9" />
-            <path d="M6 18H4a2 2 0 01-2-2v-5a2 2 0 012-2h16a2 2 0 012 2v5a2 2 0 01-2 2h-2" />
-            <rect x="6" y="14" width="12" height="8" />
+            <polyline points="6 9 6 2 18 2 18 9"/><path d="M6 18H4a2 2 0 01-2-2v-5a2 2 0 012-2h16a2 2 0 012 2v5a2 2 0 01-2 2h-2"/><rect x="6" y="14" width="12" height="8"/>
           </svg>
-          Print / PDF
+          <span class="tb-label">PDF</span>
         </button>
       </div>
     </div>

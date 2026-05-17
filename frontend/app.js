@@ -567,6 +567,7 @@ async function exportPPTX() {
 
 /* ── Render Report ── */
 function renderReport(data) {
+  window._reportData = data;
   const toc      = document.getElementById('report-toc');
   const sections = data.sections || [];
   toc.innerHTML  = `<div class="toc-title">Contents</div>
@@ -642,6 +643,46 @@ function scrollToSection(id) {
   document.getElementById(id)?.scrollIntoView({ behavior: 'smooth', block: 'start' });
   document.querySelectorAll('.toc-item').forEach(el => el.classList.remove('active'));
 }
+
+/* ── LaTeX Export ── */
+async function exportReportLatex() {
+  if (!window._reportData) { alert('No report loaded.'); return; }
+  const btn = document.querySelector('[aria-label="Download LaTeX source"]');
+  if (btn) { btn.textContent = 'Exporting…'; btn.disabled = true; }
+  try {
+    const res = await fetch(`${API}/export/report-latex`, {
+      method:  'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body:    JSON.stringify({ presentation_data: window._reportData }),
+    });
+    if (!res.ok) throw new Error(await res.text());
+    const blob = await res.blob();
+    const url  = URL.createObjectURL(blob);
+    const a    = document.createElement('a');
+    a.href     = url;
+    a.download = (window._reportData.title || 'report').replace(/\s+/g, '_') + '.tex';
+    a.click();
+    URL.revokeObjectURL(url);
+  } catch (e) {
+    alert('LaTeX export failed: ' + e.message);
+  } finally {
+    if (btn) { btn.innerHTML = 'LaTeX'; btn.disabled = false; }
+  }
+}
+
+/* ── Touch Swipe (slides) ── */
+(function initTouchSwipe() {
+  let startX = 0;
+  document.addEventListener('touchstart', e => {
+    if (!document.getElementById('screen-presentation').classList.contains('active')) return;
+    startX = e.touches[0].clientX;
+  }, { passive: true });
+  document.addEventListener('touchend', e => {
+    if (!document.getElementById('screen-presentation').classList.contains('active')) return;
+    const dx = e.changedTouches[0].clientX - startX;
+    if (Math.abs(dx) > 50) dx > 0 ? prevSlide() : nextSlide();
+  }, { passive: true });
+})();
 
 /* ── Keyboard Nav ── */
 document.addEventListener('keydown', e => {
