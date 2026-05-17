@@ -266,22 +266,29 @@ TOPIC: {req.prompt}
 
 Return ONLY valid JSON (no markdown fences) matching this schema exactly.
 CRITICAL: Do NOT use HTML tags (like <h1>) or Markdown inside JSON values. Use plain text only!
+
+Each slide must include an "image_position" field. Choose the best layout for that slide's content:
+- "full"  — AI image fills the entire slide background (best for title, quote, dramatic moments)
+- "right" — image panel on the right, text on the left (good for content-heavy slides)
+- "left"  — image panel on the left, text on the right (vary this for visual rhythm)
+- "none"  — no image, text-only layout (good for dense data or agenda slides)
+
 {{
   "title": "...",
   "subtitle": "...",
   "theme": "{req.theme}",
   "slides": [
-    {{ "type": "title",    "title": "...", "subtitle": "...", "notes": "..." }},
-    {{ "type": "agenda",   "title": "Agenda", "items": ["...", "..."], "notes": "..." }},
-    {{ "type": "content",  "title": "...", "bullets": ["...", "..."], "notes": "..." }},
-    {{ "type": "quote",    "quote": "...", "author": "...", "notes": "..." }},
-    {{ "type": "stats",    "title": "...", "stats": [{{"value":"...","label":"...","description":"..."}}], "notes": "..." }},
-    {{ "type": "image",    "title": "...", "caption": "...", "notes": "..." }},
-    {{ "type": "conclusion","title": "Key Takeaways", "bullets": ["...", "..."], "notes": "..." }}
+    {{ "type": "title",     "title": "...", "subtitle": "...", "image_position": "full", "notes": "..." }},
+    {{ "type": "agenda",    "title": "Agenda", "items": ["...", "..."], "image_position": "none", "notes": "..." }},
+    {{ "type": "content",   "title": "...", "bullets": ["...", "..."], "image_position": "right", "notes": "..." }},
+    {{ "type": "quote",     "quote": "...", "author": "...", "image_position": "full", "notes": "..." }},
+    {{ "type": "stats",     "title": "...", "stats": [{{"value":"...","label":"...","description":"..."}}], "image_position": "full", "notes": "..." }},
+    {{ "type": "content",   "title": "...", "bullets": ["...", "..."], "image_position": "left", "notes": "..." }},
+    {{ "type": "conclusion","title": "Key Takeaways", "bullets": ["...", "..."], "image_position": "right", "notes": "..." }}
   ]
 }}
 
-Make content substantive and insightful. Vary the slide types throughout."""
+Make content substantive and insightful. Vary slide types AND image_position throughout for visual rhythm."""
 
         response_text = generate_with_groq(prompt, req.model_name)
         data = extract_json(response_text)

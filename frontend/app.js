@@ -267,68 +267,70 @@ function loadSlideImages(slides) {
 
 function buildSlideHTML(sd, idx) {
   const type = sd.type || 'content';
+  const pos  = sd.image_position || 'right'; // AI decides; fallback to right
+
+  // ── Helpers ──
+  const imgFull = `
+    <div class="slide-bg-wrap">
+      <img class="slide-bg-img" id="slide-img-${idx}" alt="">
+      <div class="slide-overlay${type === 'quote' ? ' slide-overlay--heavy' : type === 'stats' ? ' slide-overlay--medium' : ''}"></div>
+    </div>`;
+
+  const imgPanel = (side) => `
+    <div class="slide-img-col slide-img-col--${side}">
+      <img class="slide-panel-img" id="slide-img-${idx}" alt="${esc(sd.title || '')}">
+      <div class="slide-img-shimmer"></div>
+    </div>`;
+
+  // ── Slide content by type ──
+  let inner = '';
 
   if (type === 'title') {
-    return `
-      <div class="slide-bg-wrap">
-        <img class="slide-bg-img" id="slide-img-${idx}" alt="">
-        <div class="slide-overlay"></div>
-      </div>
-      <div class="slide-center-content">
-        <div class="slide-title-text">${esc(sd.title || '')}</div>
-        ${sd.subtitle ? `<div class="slide-subtitle-text">${esc(sd.subtitle)}</div>` : ''}
-      </div>`;
-  }
-
-  if (type === 'quote') {
-    return `
-      <div class="slide-bg-wrap">
-        <img class="slide-bg-img" id="slide-img-${idx}" alt="">
-        <div class="slide-overlay slide-overlay--heavy"></div>
-      </div>
-      <div class="slide-center-content">
-        <div class="slide-quote-mark" aria-hidden="true">"</div>
-        <p class="slide-quote-text">${esc(sd.quote || '')}</p>
-        ${sd.author ? `<div class="slide-quote-author">— ${esc(sd.author)}</div>` : ''}
-      </div>`;
-  }
-
-  if (type === 'stats') {
+    inner = `
+      <div class="slide-title-text">${esc(sd.title || '')}</div>
+      ${sd.subtitle ? `<div class="slide-subtitle-text">${esc(sd.subtitle)}</div>` : ''}`;
+  } else if (type === 'quote') {
+    inner = `
+      <div class="slide-quote-mark" aria-hidden="true">"</div>
+      <p class="slide-quote-text">${esc(sd.quote || '')}</p>
+      ${sd.author ? `<div class="slide-quote-author">— ${esc(sd.author)}</div>` : ''}`;
+  } else if (type === 'stats') {
     const stats = (sd.stats || []).map(s => `
       <div class="stat-box">
         <div class="stat-val">${esc(s.value || '')}</div>
         <div class="stat-lbl">${esc(s.label || '')}</div>
         <div class="stat-desc">${esc(s.description || '')}</div>
       </div>`).join('');
-    return `
-      <div class="slide-bg-wrap">
-        <img class="slide-bg-img" id="slide-img-${idx}" alt="">
-        <div class="slide-overlay slide-overlay--medium"></div>
-      </div>
-      <div class="slide-center-content">
-        <div class="slide-heading">${esc(sd.title || 'Key Statistics')}</div>
-        <div class="slide-accent-bar" aria-hidden="true"></div>
-        <div class="slide-stats-grid">${stats}</div>
-      </div>`;
-  }
-
-  // content / agenda / conclusion / image — Gamma-style split layout
-  const items   = sd.bullets || sd.items || (sd.caption ? [sd.caption] : []);
-  const bullets = items.map(b =>
-    `<li><div class="slide-bullet-dot" aria-hidden="true"></div><span>${esc(b)}</span></li>`
-  ).join('');
-
-  return `
-    <div class="slide-text-col">
+    inner = `
+      <div class="slide-heading">${esc(sd.title || 'Key Statistics')}</div>
+      <div class="slide-accent-bar" aria-hidden="true"></div>
+      <div class="slide-stats-grid">${stats}</div>`;
+  } else {
+    const items   = sd.bullets || sd.items || (sd.caption ? [sd.caption] : []);
+    const bullets = items.map(b =>
+      `<li><div class="slide-bullet-dot" aria-hidden="true"></div><span>${esc(b)}</span></li>`
+    ).join('');
+    inner = `
       <div class="slide-heading">${esc(sd.title || '')}</div>
       <div class="slide-accent-bar" aria-hidden="true"></div>
       ${bullets ? `<ul class="slide-bullets">${bullets}</ul>` : ''}
-      ${sd.caption && !items.length ? `<div class="slide-caption">${esc(sd.caption)}</div>` : ''}
-    </div>
-    <div class="slide-img-col">
-      <img class="slide-panel-img" id="slide-img-${idx}" alt="${esc(sd.title || '')}">
-      <div class="slide-img-shimmer"></div>
-    </div>`;
+      ${sd.caption && !items.length ? `<div class="slide-caption">${esc(sd.caption)}</div>` : ''}`;
+  }
+
+  // ── Assemble layout based on AI-chosen image_position ──
+  if (pos === 'none') {
+    return `<div class="slide-text-col slide-text-col--full">${inner}</div>`;
+  }
+
+  if (pos === 'full') {
+    return `${imgFull}<div class="slide-center-content">${inner}</div>`;
+  }
+
+  // left or right split
+  const textCol = `<div class="slide-text-col">${inner}</div>`;
+  return pos === 'left'
+    ? `${imgPanel('left')}${textCol}`
+    : `${textCol}${imgPanel('right')}`;
 }
 
 function esc(str) {
