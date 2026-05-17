@@ -162,7 +162,7 @@ async function generate() {
         headers: { 'Content-Type': 'application/json', ...authHeader },
         body: JSON.stringify({
           prompt:      topic,
-          model_name:  'llama3',
+          model_name:  'llama-3.3-70b-versatile',
           theme:       state.theme,
           slide_count: parseInt(document.getElementById('slide-count').value, 10),
           audience:    document.getElementById('audience').value,
@@ -186,7 +186,7 @@ async function generate() {
         headers: { 'Content-Type': 'application/json', ...authHeader },
         body: JSON.stringify({
           prompt:      topic,
-          model_name:  'llama3',
+          model_name:  'llama-3.3-70b-versatile',
           report_type: document.getElementById('report-type').value,
           tone:        document.getElementById('tone').value,
           length:      document.getElementById('report-length').value,
