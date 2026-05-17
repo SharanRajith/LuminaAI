@@ -657,14 +657,12 @@ def build_latex_source(data: dict) -> str:
         r"\usepackage[margin=2.5cm]{geometry}",
         r"\usepackage[dvipsnames]{xcolor}",
         r"\usepackage[colorlinks=true,linkcolor=accent,urlcolor=accent]{hyperref}",
-        r"\usepackage{titlesec}",
-        r"\usepackage{enumitem}",
         r"\usepackage{fancyhdr}",
-        r"\usepackage{booktabs}",
         r"\usepackage{parskip}",
         r"\definecolor{accent}{RGB}{108,99,255}",
-        r"\titleformat{\section}{\Large\bfseries\color{accent}}{}{0em}{}[\color{accent}\titlerule]",
-        r"\titleformat{\subsection}{\large\bfseries}{}{0em}{}",
+        r"\makeatletter",
+        r"\renewcommand\section{\@startsection{section}{1}{\z@}{-3.5ex \@plus -1ex \@minus -.2ex}{2.3ex \@plus.2ex}{\Large\bfseries\color{accent}}}",
+        r"\makeatother",
         r"\pagestyle{fancy}",
         rf"\fancyhead[L]{{\textbf{{{title}}}}}",
         rf"\fancyhead[R]{{{date}}}",
@@ -688,7 +686,7 @@ def build_latex_source(data: dict) -> str:
     if data.get("key_highlights"):
         lines += [r"\section*{Key Highlights}",
                   r"\addcontentsline{toc}{section}{Key Highlights}",
-                  r"\begin{itemize}[leftmargin=*]"]
+                  r"\begin{itemize}"]
         for h in data["key_highlights"]:
             lines.append(rf"\item \textbf{{{tex(h.get('label',''))}}}: {tex(h.get('value',''))}")
         lines += [r"\end{itemize}", ""]
@@ -698,7 +696,7 @@ def build_latex_source(data: dict) -> str:
         if s.get("content"):
             lines.append(tex(s["content"]))
         if s.get("key_points"):
-            lines += [r"\begin{itemize}[leftmargin=*]"]
+            lines += [r"\begin{itemize}"]
             for p in s["key_points"]:
                 lines.append(rf"\item {tex(p)}")
             lines += [r"\end{itemize}"]
@@ -715,7 +713,7 @@ def build_latex_source(data: dict) -> str:
     if data.get("recommendations"):
         lines += [r"\section*{Recommendations}",
                   r"\addcontentsline{toc}{section}{Recommendations}",
-                  r"\begin{enumerate}[leftmargin=*]"]
+                  r"\begin{enumerate}"]
         for r_text in data["recommendations"]:
             lines.append(rf"\item {tex(r_text)}")
         lines += [r"\end{enumerate}"]

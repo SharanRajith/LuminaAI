@@ -3,6 +3,7 @@ services:
     name: lumina-ai
     runtime: docker
     dockerfilePath: ./backend/Dockerfile
+    dockerContext: ./backend
     plan: free
     envVars:
       - key: GROQ_API_KEY
