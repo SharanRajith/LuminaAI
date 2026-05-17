@@ -13,4 +13,4 @@ services:
       - key: SUPABASE_SERVICE_ROLE_KEY
         sync: false
       - key: CORS_ORIGIN
-        value: "*"
+        value: https://luminaai25.netlify.app
