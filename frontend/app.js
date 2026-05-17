@@ -227,12 +227,12 @@ function renderPresentation(data) {
     div.dataset.notes = sd.notes || '';
     div.setAttribute('role', 'tabpanel');
     div.setAttribute('aria-label', `Slide ${i + 1}: ${sd.title || ''}`);
-    div.innerHTML    = buildSlideHTML(sd);
+    div.innerHTML    = buildSlideHTML(sd, i);
     wrap.appendChild(div);
   });
 
-  // Load background images asynchronously after slides are rendered
-  loadSlideImages(slides, wrap);
+  // Load AI images for every slide asynchronously
+  loadSlideImages(slides);
 
   const dots = document.getElementById('slide-dots');
   dots.innerHTML = '';
@@ -250,31 +250,31 @@ function renderPresentation(data) {
   updateNotes();
 }
 
-function loadSlideImages(slides, wrap) {
-  const slideEls = wrap.querySelectorAll('.slide');
+function loadSlideImages(slides) {
   slides.forEach((sd, i) => {
     const topic = sd.title || sd.quote || '';
-    if (!topic || !slideEls[i]) return;
+    if (!topic) return;
+    const imgEl = document.getElementById(`slide-img-${i}`);
+    if (!imgEl) return;
     const encoded = encodeURIComponent(
-      `professional presentation slide about ${topic}, cinematic, minimal, high quality`
+      `${topic}, professional photography, cinematic lighting, high quality, 4k`
     );
-    const url = `https://image.pollinations.ai/prompt/${encoded}?width=1280&height=720&nologo=true&seed=${i}`;
-    const img = new Image();
-    img.onload = () => {
-      slideEls[i].style.backgroundImage = `url('${url}')`;
-      slideEls[i].style.backgroundSize = 'cover';
-      slideEls[i].style.backgroundPosition = 'center';
-    };
-    img.src = url;
+    imgEl.onload  = () => imgEl.classList.add('loaded');
+    imgEl.onerror = () => { if (imgEl.parentElement) imgEl.parentElement.style.display = 'none'; };
+    imgEl.src = `https://image.pollinations.ai/prompt/${encoded}?width=1280&height=720&nologo=true&seed=${i}`;
   });
 }
 
-function buildSlideHTML(sd) {
+function buildSlideHTML(sd, idx) {
   const type = sd.type || 'content';
 
   if (type === 'title') {
     return `
-      <div style="text-align:center;width:100%">
+      <div class="slide-bg-wrap">
+        <img class="slide-bg-img" id="slide-img-${idx}" alt="">
+        <div class="slide-overlay"></div>
+      </div>
+      <div class="slide-center-content">
         <div class="slide-title-text">${esc(sd.title || '')}</div>
         ${sd.subtitle ? `<div class="slide-subtitle-text">${esc(sd.subtitle)}</div>` : ''}
       </div>`;
@@ -282,8 +282,12 @@ function buildSlideHTML(sd) {
 
   if (type === 'quote') {
     return `
-      <div style="display:flex;flex-direction:column;align-items:center;width:100%;gap:0">
-        <div style="font-size:5rem;opacity:.15;line-height:1;margin-bottom:-16px" aria-hidden="true">"</div>
+      <div class="slide-bg-wrap">
+        <img class="slide-bg-img" id="slide-img-${idx}" alt="">
+        <div class="slide-overlay slide-overlay--heavy"></div>
+      </div>
+      <div class="slide-center-content">
+        <div class="slide-quote-mark" aria-hidden="true">"</div>
         <p class="slide-quote-text">${esc(sd.quote || '')}</p>
         ${sd.author ? `<div class="slide-quote-author">— ${esc(sd.author)}</div>` : ''}
       </div>`;
@@ -297,22 +301,34 @@ function buildSlideHTML(sd) {
         <div class="stat-desc">${esc(s.description || '')}</div>
       </div>`).join('');
     return `
-      <div class="slide-heading">${esc(sd.title || 'Key Statistics')}</div>
-      <div class="slide-accent-bar" aria-hidden="true"></div>
-      <div class="slide-stats-grid">${stats}</div>`;
+      <div class="slide-bg-wrap">
+        <img class="slide-bg-img" id="slide-img-${idx}" alt="">
+        <div class="slide-overlay slide-overlay--medium"></div>
+      </div>
+      <div class="slide-center-content">
+        <div class="slide-heading">${esc(sd.title || 'Key Statistics')}</div>
+        <div class="slide-accent-bar" aria-hidden="true"></div>
+        <div class="slide-stats-grid">${stats}</div>
+      </div>`;
   }
 
-  // content / agenda / conclusion / image / default
+  // content / agenda / conclusion / image — Gamma-style split layout
   const items   = sd.bullets || sd.items || (sd.caption ? [sd.caption] : []);
   const bullets = items.map(b =>
     `<li><div class="slide-bullet-dot" aria-hidden="true"></div><span>${esc(b)}</span></li>`
   ).join('');
 
   return `
-    <div class="slide-heading">${esc(sd.title || '')}</div>
-    <div class="slide-accent-bar" aria-hidden="true"></div>
-    ${bullets ? `<ul class="slide-bullets">${bullets}</ul>` : ''}
-    ${sd.caption && !items.length ? `<div class="slide-caption">${esc(sd.caption)}</div>` : ''}`;
+    <div class="slide-text-col">
+      <div class="slide-heading">${esc(sd.title || '')}</div>
+      <div class="slide-accent-bar" aria-hidden="true"></div>
+      ${bullets ? `<ul class="slide-bullets">${bullets}</ul>` : ''}
+      ${sd.caption && !items.length ? `<div class="slide-caption">${esc(sd.caption)}</div>` : ''}
+    </div>
+    <div class="slide-img-col">
+      <img class="slide-panel-img" id="slide-img-${idx}" alt="${esc(sd.title || '')}">
+      <div class="slide-img-shimmer"></div>
+    </div>`;
 }
 
 function esc(str) {
