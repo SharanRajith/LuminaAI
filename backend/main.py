@@ -139,6 +139,28 @@ class ReportRequest(BaseModel):
         return v
 
 
+class SlideRegenerateRequest(BaseModel):
+    presentation_title: str = Field(..., min_length=1, max_length=200)
+    slide_type: str = Field("content")
+    topic: str = Field(..., min_length=3, max_length=500)
+    tone: str = Field("professional")
+    audience: str = Field("general")
+
+    @field_validator("tone")
+    @classmethod
+    def validate_tone(cls, v):
+        if v not in _VALID_TONES:
+            raise ValueError(f"tone must be one of {sorted(_VALID_TONES)}")
+        return v
+
+    @field_validator("audience")
+    @classmethod
+    def validate_audience(cls, v):
+        if v not in _VALID_AUDIENCES:
+            raise ValueError(f"audience must be one of {sorted(_VALID_AUDIENCES)}")
+        return v
+
+
 class ExportRequest(BaseModel):
     presentation_data: dict
 
@@ -372,6 +394,37 @@ CRITICAL: Do NOT use HTML tags (like <h1>) or Markdown inside JSON values. Use p
 
     except Exception as e:
         logger.exception("Report generation failed")
+        raise HTTPException(status_code=500, detail=str(e))
+
+
+@app.post("/generate/slide")
+@limiter.limit("20/day")
+async def regenerate_slide(req: SlideRegenerateRequest, request: Request):
+    """Regenerate a single slide — used by the inline editor."""
+    try:
+        prompt = f"""You are an expert presentation designer.
+Regenerate ONE slide for a presentation titled "{req.presentation_title}".
+
+Slide topic: {req.topic}
+Slide type: {req.slide_type}
+Audience: {req.audience}
+Tone: {req.tone}
+
+Return ONLY a single JSON slide object (no array, no wrapper). Use plain text only, no HTML or Markdown.
+Choose image_position from: "full" | "right" | "left" | "none"
+
+For type "content":  {{"type":"content","title":"...","bullets":["...","...","..."],"image_position":"right","notes":"..."}}
+For type "quote":    {{"type":"quote","quote":"...","author":"...","image_position":"full","notes":"..."}}
+For type "stats":    {{"type":"stats","title":"...","stats":[{{"value":"...","label":"...","description":"..."}}],"image_position":"full","notes":"..."}}
+For type "title":    {{"type":"title","title":"...","subtitle":"...","image_position":"full","notes":"..."}}
+
+Make it substantive and engaging."""
+
+        response_text = generate_with_groq(prompt, None)
+        slide = extract_json(response_text)
+        return slide
+    except Exception as e:
+        logger.exception("Single slide regeneration failed")
         raise HTTPException(status_code=500, detail=str(e))
 
 

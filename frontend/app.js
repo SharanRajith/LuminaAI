@@ -224,7 +224,8 @@ function renderPresentation(data) {
   slides.forEach((sd, i) => {
     const div        = document.createElement('div');
     div.className    = 'slide' + (i === 0 ? ' active' : '');
-    div.dataset.notes = sd.notes || '';
+    div.dataset.notes    = sd.notes || '';
+    div.dataset.slideIdx = i;
     div.setAttribute('role', 'tabpanel');
     div.setAttribute('aria-label', `Slide ${i + 1}: ${sd.title || ''}`);
     div.innerHTML    = buildSlideHTML(sd, i);
@@ -250,24 +251,25 @@ function renderPresentation(data) {
   updateNotes();
 }
 
-function loadSlideImages(slides) {
+function loadSlideImages(slides, startIdx = 0) {
   slides.forEach((sd, i) => {
+    const idx = startIdx + i;
     const topic = sd.title || sd.quote || '';
     if (!topic) return;
-    const imgEl = document.getElementById(`slide-img-${i}`);
+    const imgEl = document.getElementById(`slide-img-${idx}`);
     if (!imgEl) return;
 
     const keyword  = encodeURIComponent(topic.split(' ').slice(0, 3).join(' '));
     const aiPrompt = encodeURIComponent(`${topic}, professional photography, cinematic lighting, 4k`);
 
-    // Step 1 — instant stock photo from Unsplash (no key needed via this endpoint)
+    // Step 1 — instant stock photo from Unsplash
     const stockUrl = `https://source.unsplash.com/1280x720/?${keyword}`;
     imgEl.onload  = () => imgEl.classList.add('loaded');
-    imgEl.onerror = () => imgEl.classList.add('loaded'); // still mark loaded so shimmer hides
+    imgEl.onerror = () => imgEl.classList.add('loaded');
     imgEl.src = stockUrl;
 
-    // Step 2 — swap to Pollinations AI image when it finishes generating (~10-15s)
-    const aiUrl = `https://image.pollinations.ai/prompt/${aiPrompt}?width=1280&height=720&nologo=true&seed=${i}`;
+    // Step 2 — swap to Pollinations AI image when ready (~10-15s)
+    const aiUrl = `https://image.pollinations.ai/prompt/${aiPrompt}?width=1280&height=720&nologo=true&seed=${idx}`;
     const aiImg = new Image();
     aiImg.onload = () => {
       imgEl.style.transition = 'opacity .6s ease';
@@ -283,9 +285,22 @@ function loadSlideImages(slides) {
 
 function buildSlideHTML(sd, idx) {
   const type = sd.type || 'content';
-  const pos  = sd.image_position || 'right'; // AI decides; fallback to right
+  const pos  = sd.image_position || 'right';
 
-  // ── Helpers ──
+  // ── Per-slide action controls (hover overlay) ──
+  const controls = `
+    <div class="slide-controls">
+      <button class="slide-ctrl-btn" onclick="regenerateSlide(${idx})" title="Regenerate slide">
+        <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="1 4 1 10 7 10"/><path d="M3.51 15a9 9 0 102.13-9.36L1 10"/></svg>
+        Regenerate
+      </button>
+      <button class="slide-ctrl-btn" onclick="swapSlideImage(${idx})" title="New image">
+        <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><rect x="3" y="3" width="18" height="18" rx="2"/><circle cx="8.5" cy="8.5" r="1.5"/><polyline points="21 15 16 10 5 21"/></svg>
+        New Image
+      </button>
+    </div>`;
+
+  // ── Image helpers ──
   const imgFull = `
     <div class="slide-bg-wrap">
       <img class="slide-bg-img" id="slide-img-${idx}" alt="">
@@ -293,23 +308,23 @@ function buildSlideHTML(sd, idx) {
     </div>`;
 
   const imgPanel = (side) => `
-    <div class="slide-img-col slide-img-col--${side}">
+    <div class="slide-img-col slide-img-col--${side}" onclick="swapSlideImage(${idx})" title="Click for new image">
       <img class="slide-panel-img" id="slide-img-${idx}" alt="${esc(sd.title || '')}">
       <div class="slide-img-shimmer"></div>
+      <div class="slide-img-swap-hint">Click for new image</div>
     </div>`;
 
-  // ── Slide content by type ──
+  // ── Content by type ──
   let inner = '';
-
   if (type === 'title') {
     inner = `
-      <div class="slide-title-text">${esc(sd.title || '')}</div>
-      ${sd.subtitle ? `<div class="slide-subtitle-text">${esc(sd.subtitle)}</div>` : ''}`;
+      <div class="slide-title-text" data-field="title">${esc(sd.title || '')}</div>
+      ${sd.subtitle ? `<div class="slide-subtitle-text" data-field="subtitle">${esc(sd.subtitle)}</div>` : ''}`;
   } else if (type === 'quote') {
     inner = `
       <div class="slide-quote-mark" aria-hidden="true">"</div>
-      <p class="slide-quote-text">${esc(sd.quote || '')}</p>
-      ${sd.author ? `<div class="slide-quote-author">— ${esc(sd.author)}</div>` : ''}`;
+      <p class="slide-quote-text" data-field="quote">${esc(sd.quote || '')}</p>
+      ${sd.author ? `<div class="slide-quote-author" data-field="author">— ${esc(sd.author)}</div>` : ''}`;
   } else if (type === 'stats') {
     const stats = (sd.stats || []).map(s => `
       <div class="stat-box">
@@ -318,35 +333,32 @@ function buildSlideHTML(sd, idx) {
         <div class="stat-desc">${esc(s.description || '')}</div>
       </div>`).join('');
     inner = `
-      <div class="slide-heading">${esc(sd.title || 'Key Statistics')}</div>
+      <div class="slide-heading" data-field="title">${esc(sd.title || 'Key Statistics')}</div>
       <div class="slide-accent-bar" aria-hidden="true"></div>
       <div class="slide-stats-grid">${stats}</div>`;
   } else {
     const items   = sd.bullets || sd.items || (sd.caption ? [sd.caption] : []);
-    const bullets = items.map(b =>
-      `<li><div class="slide-bullet-dot" aria-hidden="true"></div><span>${esc(b)}</span></li>`
+    const bullets = items.map((b, bi) =>
+      `<li><div class="slide-bullet-dot" aria-hidden="true"></div><span data-field="bullet" data-bullet-idx="${bi}">${esc(b)}</span></li>`
     ).join('');
     inner = `
-      <div class="slide-heading">${esc(sd.title || '')}</div>
+      <div class="slide-heading" data-field="title">${esc(sd.title || '')}</div>
       <div class="slide-accent-bar" aria-hidden="true"></div>
       ${bullets ? `<ul class="slide-bullets">${bullets}</ul>` : ''}
-      ${sd.caption && !items.length ? `<div class="slide-caption">${esc(sd.caption)}</div>` : ''}`;
+      ${sd.caption && !items.length ? `<div class="slide-caption" data-field="caption">${esc(sd.caption)}</div>` : ''}`;
   }
 
-  // ── Assemble layout based on AI-chosen image_position ──
+  // ── Assemble by image_position ──
   if (pos === 'none') {
-    return `<div class="slide-text-col slide-text-col--full">${inner}</div>`;
+    return `${controls}<div class="slide-text-col slide-text-col--full">${inner}</div>`;
   }
-
   if (pos === 'full') {
-    return `${imgFull}<div class="slide-center-content">${inner}</div>`;
+    return `${controls}${imgFull}<div class="slide-center-content">${inner}</div>`;
   }
-
-  // left or right split
   const textCol = `<div class="slide-text-col">${inner}</div>`;
   return pos === 'left'
-    ? `${imgPanel('left')}${textCol}`
-    : `${textCol}${imgPanel('right')}`;
+    ? `${controls}${imgPanel('left')}${textCol}`
+    : `${controls}${textCol}${imgPanel('right')}`;
 }
 
 function esc(str) {
@@ -400,6 +412,130 @@ function toggleFullscreen() {
     document.getElementById('screen-presentation').requestFullscreen?.();
   } else {
     document.exitFullscreen?.();
+  }
+}
+
+/* ── Edit Mode ── */
+let editMode = false;
+
+function toggleEditMode() {
+  editMode ? exitEditMode() : enterEditMode();
+}
+
+function enterEditMode() {
+  editMode = true;
+  document.querySelectorAll('[data-field]').forEach(el => {
+    el.contentEditable = 'true';
+    el.classList.add('editable');
+  });
+  const btn = document.getElementById('edit-mode-btn');
+  btn.textContent = '✓ Done';
+  btn.style.background = 'rgba(0,200,100,.25)';
+  btn.style.color = '#00c864';
+}
+
+function exitEditMode() {
+  editMode = false;
+  document.querySelectorAll('[data-field]').forEach(el => {
+    el.contentEditable = 'false';
+    el.classList.remove('editable');
+    const slideDiv = el.closest('[data-slide-idx]');
+    if (!slideDiv || !state.presData) return;
+    const idx   = parseInt(slideDiv.dataset.slideIdx);
+    const slide = state.presData.slides?.[idx];
+    if (!slide) return;
+    const field = el.dataset.field;
+    if (field === 'bullet') {
+      const bi  = parseInt(el.dataset.bulletIdx);
+      const arr = slide.bullets || slide.items || [];
+      arr[bi]   = el.textContent.trim();
+    } else if (field === 'author') {
+      slide.author = el.textContent.replace(/^—\s*/, '').trim();
+    } else {
+      slide[field] = el.textContent.trim();
+    }
+  });
+  const btn = document.getElementById('edit-mode-btn');
+  btn.textContent = 'Edit';
+  btn.style.background = '';
+  btn.style.color = '';
+}
+
+/* ── Regenerate Single Slide ── */
+async function regenerateSlide(idx) {
+  if (!state.presData) return;
+  const slide    = state.presData.slides?.[idx];
+  const slideDiv = document.querySelector(`[data-slide-idx="${idx}"]`);
+  if (!slide || !slideDiv) return;
+
+  slideDiv.classList.add('slide-loading');
+  try {
+    const res = await fetch(`${API}/generate/slide`, {
+      method:  'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body:    JSON.stringify({
+        presentation_title: state.presData.title || '',
+        slide_type:         slide.type || 'content',
+        topic:              slide.title || slide.quote || state.presData.title,
+        tone:               state.presData.tone || 'professional',
+        audience:           state.presData.audience || 'general',
+      }),
+    });
+    if (!res.ok) throw new Error(await res.text());
+    const newSlide = await res.json();
+    newSlide.notes = slide.notes; // preserve original notes
+    state.presData.slides[idx] = newSlide;
+    slideDiv.dataset.notes = newSlide.notes || '';
+    slideDiv.innerHTML = buildSlideHTML(newSlide, idx);
+    loadSlideImages([newSlide], idx);
+  } catch (e) {
+    alert('Regeneration failed: ' + e.message);
+  } finally {
+    slideDiv.classList.remove('slide-loading');
+  }
+}
+
+/* ── Swap Slide Image ── */
+function swapSlideImage(idx) {
+  const imgEl = document.getElementById(`slide-img-${idx}`);
+  if (!imgEl) return;
+  const slide   = state.presData?.slides?.[idx];
+  const topic   = slide?.title || slide?.quote || '';
+  const newSeed = Math.floor(Math.random() * 9999);
+  const encoded = encodeURIComponent(`${topic}, professional photography, cinematic lighting, 4k`);
+  imgEl.classList.remove('loaded');
+  imgEl.src = `https://image.pollinations.ai/prompt/${encoded}?width=1280&height=720&nologo=true&seed=${newSeed}`;
+  imgEl.onload  = () => imgEl.classList.add('loaded');
+}
+
+/* ── PDF Export ── */
+async function exportPDF() {
+  if (!state.presData) return;
+  const btn = document.querySelector('[aria-label="Export as PDF"]');
+  if (btn) { btn.textContent = 'Exporting…'; btn.disabled = true; }
+
+  try {
+    const { jsPDF } = window.jspdf;
+    const pdf    = new jsPDF({ orientation: 'landscape', unit: 'px', format: [1280, 720] });
+    const slides = document.querySelectorAll('#slide-wrap .slide');
+    const active = state.slide;
+
+    for (let i = 0; i < slides.length; i++) {
+      slides[i].classList.add('active');
+      if (i > 0) slides[i - 1].classList.remove('active');
+      await new Promise(r => setTimeout(r, 120)); // let paint settle
+      const canvas = await html2canvas(slides[i], { scale: 1, useCORS: true, logging: false });
+      if (i > 0) pdf.addPage();
+      pdf.addImage(canvas.toDataURL('image/jpeg', 0.92), 'JPEG', 0, 0, 1280, 720);
+    }
+
+    // restore original active slide
+    slides.forEach((s, i) => s.classList.toggle('active', i === active));
+    pdf.save(`${state.presData.title || 'lumina'}.pdf`);
+  } catch (e) {
+    alert('PDF export failed: ' + e.message);
+  } finally {
+    if (btn) { btn.textContent = 'PDF'; btn.disabled = false; }
   }
 }
 

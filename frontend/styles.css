@@ -326,6 +326,25 @@ select option{background:var(--bg2)}
 .lib-btn{width:28px;height:28px;border-radius:6px;background:var(--card);border:1px solid var(--border);color:var(--text2);display:flex;align-items:center;justify-content:center;transition:.2s}
 .lib-btn:hover{background:rgba(255,101,132,.15);color:var(--acc2);border-color:rgba(255,101,132,.3)}
 
+/* ── Slide Controls (hover overlay) ── */
+.slide-controls{position:absolute;top:12px;right:12px;display:flex;gap:6px;z-index:20;opacity:0;transition:opacity .2s;pointer-events:none}
+.slide:hover .slide-controls{opacity:1;pointer-events:auto}
+.slide-ctrl-btn{display:flex;align-items:center;gap:5px;padding:5px 10px;border-radius:8px;background:rgba(0,0,0,.65);border:1px solid rgba(255,255,255,.15);color:#fff;font-size:.75rem;font-weight:600;cursor:pointer;backdrop-filter:blur(8px);transition:.15s;white-space:nowrap}
+.slide-ctrl-btn:hover{background:rgba(108,99,255,.5);border-color:rgba(108,99,255,.6)}
+.slide-ctrl-btn:disabled{opacity:.4;cursor:not-allowed}
+
+/* ── Slide loading state (during regeneration) ── */
+.slide-loading::after{content:'Regenerating…';position:absolute;inset:0;display:flex;align-items:center;justify-content:center;background:rgba(0,0,0,.7);color:#fff;font-size:1.1rem;font-weight:600;z-index:30;backdrop-filter:blur(4px)}
+
+/* ── Inline edit mode ── */
+[contenteditable="true"].editable{outline:2px dashed rgba(108,99,255,.6);outline-offset:3px;border-radius:4px;cursor:text;min-width:20px}
+[contenteditable="true"].editable:focus{outline-color:rgba(108,99,255,1);background:rgba(108,99,255,.08)}
+
+/* ── Image swap hint ── */
+.slide-img-col{cursor:pointer}
+.slide-img-swap-hint{position:absolute;bottom:0;left:0;right:0;padding:8px;background:rgba(0,0,0,.6);color:rgba(255,255,255,.7);font-size:.72rem;text-align:center;opacity:0;transition:opacity .2s}
+.slide-img-col:hover .slide-img-swap-hint{opacity:1}
+
 /* ── Responsive ── */
 @media(max-width:900px){
   .hero{flex-direction:column;padding:100px 5vw 60px;text-align:center}
