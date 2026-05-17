@@ -1,10 +1,9 @@
 services:
   - type: web
     name: lumina-ai
-    runtime: python
+    runtime: docker
+    dockerfilePath: ./backend/Dockerfile
     plan: free
-    buildCommand: pip install -r backend/requirements.txt
-    startCommand: cd backend && uvicorn main:app --host 0.0.0.0 --port $PORT --proxy-headers --forwarded-allow-ips='*'
     envVars:
       - key: GROQ_API_KEY
         sync: false

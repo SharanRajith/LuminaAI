@@ -644,7 +644,36 @@ function scrollToSection(id) {
   document.querySelectorAll('.toc-item').forEach(el => el.classList.remove('active'));
 }
 
-/* ── LaTeX Export ── */
+/* ── Report PDF (LaTeX compiled) ── */
+async function exportReportPDF() {
+  if (!window._reportData) { alert('No report loaded.'); return; }
+  const btn = document.getElementById('report-pdf-btn');
+  if (btn) { btn.textContent = 'Compiling…'; btn.disabled = true; }
+  try {
+    const res = await fetch(`${API}/export/report-pdf`, {
+      method:  'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body:    JSON.stringify({ presentation_data: window._reportData }),
+    });
+    if (!res.ok) {
+      const err = await res.text();
+      throw new Error(err);
+    }
+    const blob = await res.blob();
+    const url  = URL.createObjectURL(blob);
+    const a    = document.createElement('a');
+    a.href     = url;
+    a.download = (window._reportData.title || 'report').replace(/\s+/g, '_') + '.pdf';
+    a.click();
+    URL.revokeObjectURL(url);
+  } catch (e) {
+    alert('PDF compilation failed: ' + e.message);
+  } finally {
+    if (btn) { btn.textContent = 'PDF'; btn.disabled = false; }
+  }
+}
+
+/* ── LaTeX Source Export ── */
 async function exportReportLatex() {
   if (!window._reportData) { alert('No report loaded.'); return; }
   const btn = document.querySelector('[aria-label="Download LaTeX source"]');
