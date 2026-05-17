@@ -256,12 +256,28 @@ function loadSlideImages(slides) {
     if (!topic) return;
     const imgEl = document.getElementById(`slide-img-${i}`);
     if (!imgEl) return;
-    const encoded = encodeURIComponent(
-      `${topic}, professional photography, cinematic lighting, high quality, 4k`
-    );
+
+    const keyword  = encodeURIComponent(topic.split(' ').slice(0, 3).join(' '));
+    const aiPrompt = encodeURIComponent(`${topic}, professional photography, cinematic lighting, 4k`);
+
+    // Step 1 — instant stock photo from Unsplash (no key needed via this endpoint)
+    const stockUrl = `https://source.unsplash.com/1280x720/?${keyword}`;
     imgEl.onload  = () => imgEl.classList.add('loaded');
-    imgEl.onerror = () => { if (imgEl.parentElement) imgEl.parentElement.style.display = 'none'; };
-    imgEl.src = `https://image.pollinations.ai/prompt/${encoded}?width=1280&height=720&nologo=true&seed=${i}`;
+    imgEl.onerror = () => imgEl.classList.add('loaded'); // still mark loaded so shimmer hides
+    imgEl.src = stockUrl;
+
+    // Step 2 — swap to Pollinations AI image when it finishes generating (~10-15s)
+    const aiUrl = `https://image.pollinations.ai/prompt/${aiPrompt}?width=1280&height=720&nologo=true&seed=${i}`;
+    const aiImg = new Image();
+    aiImg.onload = () => {
+      imgEl.style.transition = 'opacity .6s ease';
+      imgEl.style.opacity = '0';
+      setTimeout(() => {
+        imgEl.src = aiUrl;
+        imgEl.style.opacity = '1';
+      }, 300);
+    };
+    aiImg.src = aiUrl;
   });
 }
 
