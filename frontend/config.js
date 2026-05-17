@@ -7,7 +7,7 @@
 
 // 1. Backend URL — your Railway / Render deployed URL.
 //    Example: window.LUMINA_API_URL = 'https://lumina-backend.up.railway.app';
-window.LUMINA_API_URL = 'http://localhost:8000';
+window.LUMINA_API_URL = 'https://lumina-ai-llbr.onrender.com';
 
 // 2. Supabase — Dashboard > Project Settings > API > anon public key.
 //    Leave as placeholders to disable auth/library (app still works without it).
