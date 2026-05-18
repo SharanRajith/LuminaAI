@@ -12,6 +12,11 @@ const API = window.LUMINA_API_URL || 'http://localhost:8000';
 let supabaseClient = null;
 let loadingTimer = null;
 
+const undoStack = [];
+const timerState = { running: false, elapsed: 0, intervalId: null };
+let _thumbsVisible = false;
+let _dragFromIdx   = null;
+
 /* ── Offline Detection ── */
 function syncOnlineStatus() {
   const banner = document.getElementById('offline-banner');
@@ -27,9 +32,9 @@ function showScreen(name) {
   document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
   const el = document.getElementById('screen-' + name);
   if (el) el.classList.add('active');
-  // Hide main navbar in immersive screens; show it everywhere else
   const navbar = document.getElementById('navbar');
   if (navbar) navbar.style.display = (name === 'presentation' || name === 'report') ? 'none' : '';
+  if (name !== 'presentation') { clearInterval(timerState.intervalId); timerState.running = false; }
   window.scrollTo(0, 0);
 }
 
@@ -249,6 +254,8 @@ function renderPresentation(data) {
 
   updateSlideCounter();
   updateNotes();
+  renderThumbnails();
+  resetTimer();
 }
 
 function loadSlideImages(slides, startIdx = 0) {
@@ -292,11 +299,23 @@ function buildSlideHTML(sd, idx) {
     <div class="slide-controls">
       <button class="slide-ctrl-btn" onclick="regenerateSlide(${idx})" title="Regenerate slide">
         <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="1 4 1 10 7 10"/><path d="M3.51 15a9 9 0 102.13-9.36L1 10"/></svg>
-        Regenerate
+        Regen
       </button>
       <button class="slide-ctrl-btn" onclick="swapSlideImage(${idx})" title="New image">
         <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><rect x="3" y="3" width="18" height="18" rx="2"/><circle cx="8.5" cy="8.5" r="1.5"/><polyline points="21 15 16 10 5 21"/></svg>
-        New Image
+        Image
+      </button>
+      <button class="slide-ctrl-btn" onclick="addSlide(${idx})" title="Add slide after">
+        <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><rect x="2" y="3" width="20" height="14" rx="2"/><path d="M12 7v6M9 10h6"/></svg>
+        Add
+      </button>
+      <button class="slide-ctrl-btn" onclick="duplicateSlide(${idx})" title="Duplicate slide">
+        <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="9" y="9" width="13" height="13" rx="2"/><path d="M5 15H4a2 2 0 01-2-2V4a2 2 0 012-2h9a2 2 0 012 2v1"/></svg>
+        Dup
+      </button>
+      <button class="slide-ctrl-btn slide-ctrl-btn--danger" onclick="deleteSlide(${idx})" title="Delete slide">
+        <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14a2 2 0 01-2 2H8a2 2 0 01-2-2L5 6"/></svg>
+        Del
       </button>
     </div>`;
 
@@ -383,6 +402,7 @@ function goToSlide(n) {
   dots[state.slide]?.setAttribute('aria-selected', 'true');
   updateSlideCounter();
   updateNotes();
+  updateThumbnailActive();
 }
 
 function nextSlide() { goToSlide(state.slide + 1); }
@@ -436,6 +456,7 @@ function enterEditMode() {
 
 function exitEditMode() {
   editMode = false;
+  pushUndo();
   document.querySelectorAll('[data-field]').forEach(el => {
     el.contentEditable = 'false';
     el.classList.remove('editable');
@@ -747,7 +768,197 @@ document.addEventListener('keydown', e => {
   if (e.key === 'Escape')                        showScreen('create');
   if (e.key === 'n' || e.key === 'N')            toggleNotes();
   if (e.key === 'f' || e.key === 'F')            toggleFullscreen();
+  if ((e.ctrlKey || e.metaKey) && e.key === 'z' && !editMode) { e.preventDefault(); undoLastAction(); }
 });
+
+/* ── Undo ── */
+function pushUndo() {
+  if (!state.presData?.slides) return;
+  undoStack.push(JSON.stringify(state.presData.slides));
+  if (undoStack.length > 20) undoStack.shift();
+}
+
+function undoLastAction() {
+  if (!undoStack.length) return;
+  state.presData.slides = JSON.parse(undoStack.pop());
+  if (state.slide >= state.presData.slides.length) state.slide = state.presData.slides.length - 1;
+  refreshSlides();
+}
+
+/* ── Refresh slides without resetting index ── */
+function refreshSlides() {
+  if (!state.presData) return;
+  const slides = state.presData.slides || [];
+  if (state.slide >= slides.length) state.slide = Math.max(0, slides.length - 1);
+
+  const wrap = document.getElementById('slide-wrap');
+  wrap.innerHTML = '';
+  slides.forEach((sd, i) => {
+    const div = document.createElement('div');
+    div.className    = 'slide' + (i === state.slide ? ' active' : '');
+    div.dataset.notes    = sd.notes || '';
+    div.dataset.slideIdx = i;
+    div.setAttribute('role', 'tabpanel');
+    div.setAttribute('aria-label', `Slide ${i + 1}: ${sd.title || ''}`);
+    div.innerHTML = buildSlideHTML(sd, i);
+    wrap.appendChild(div);
+  });
+
+  loadSlideImages(slides);
+
+  const dots = document.getElementById('slide-dots');
+  dots.innerHTML = '';
+  slides.forEach((_, i) => {
+    const d = document.createElement('button');
+    d.className = 'dot' + (i === state.slide ? ' active' : '');
+    d.setAttribute('role', 'tab');
+    d.setAttribute('aria-label', `Go to slide ${i + 1}`);
+    d.setAttribute('aria-selected', String(i === state.slide));
+    d.onclick = () => goToSlide(i);
+    dots.appendChild(d);
+  });
+
+  renderThumbnails();
+  updateSlideCounter();
+  updateNotes();
+}
+
+/* ── Add / Duplicate / Delete slide ── */
+function addSlide(afterIdx) {
+  if (!state.presData) return;
+  pushUndo();
+  const i = (afterIdx !== undefined) ? afterIdx : state.slide;
+  state.presData.slides.splice(i + 1, 0, {
+    type: 'content', title: 'New Slide',
+    bullets: ['Add your content here'], image_position: 'right', notes: '',
+  });
+  state.slide = i + 1;
+  refreshSlides();
+}
+
+function duplicateSlide(idx) {
+  if (!state.presData) return;
+  pushUndo();
+  const i = (idx !== undefined) ? idx : state.slide;
+  const clone = JSON.parse(JSON.stringify(state.presData.slides[i]));
+  state.presData.slides.splice(i + 1, 0, clone);
+  state.slide = i + 1;
+  refreshSlides();
+}
+
+function deleteSlide(idx) {
+  if (!state.presData) return;
+  const slides = state.presData.slides;
+  if (slides.length <= 1) { alert('Cannot delete the only slide.'); return; }
+  pushUndo();
+  const i = (idx !== undefined) ? idx : state.slide;
+  slides.splice(i, 1);
+  if (state.slide >= slides.length) state.slide = slides.length - 1;
+  refreshSlides();
+}
+
+/* ── Thumbnail strip ── */
+function toggleThumbnails() {
+  _thumbsVisible = !_thumbsVisible;
+  const strip = document.getElementById('slide-thumbnails');
+  const btn   = document.getElementById('thumb-toggle-btn');
+  if (strip) strip.style.display = _thumbsVisible ? 'flex' : 'none';
+  if (btn)   btn.style.background = _thumbsVisible ? 'rgba(108,99,255,.3)' : '';
+  if (_thumbsVisible) renderThumbnails();
+}
+
+function renderThumbnails() {
+  const container = document.getElementById('slide-thumbnails');
+  if (!container || !state.presData) return;
+  if (!_thumbsVisible) return;
+  const slides = state.presData.slides || [];
+  container.innerHTML = slides.map((sd, i) => {
+    const typeLabel = (sd.type || 'content').slice(0, 5).toUpperCase();
+    const title     = (sd.title || sd.quote || '').substring(0, 50);
+    return `<div class="slide-thumb${i === state.slide ? ' active' : ''}"
+         data-idx="${i}" draggable="true" role="listitem"
+         onclick="goToSlide(${i})"
+         ondragstart="thumbDragStart(${i})"
+         ondragover="thumbDragOver(event,${i})"
+         ondragleave="thumbDragLeave(event)"
+         ondrop="thumbDrop(event,${i})"
+         title="Slide ${i + 1}: ${esc(title)}">
+      <div class="thumb-inner">
+        <div class="thumb-type">${typeLabel}</div>
+        <div class="thumb-title">${esc(title) || '(untitled)'}</div>
+      </div>
+      <div class="thumb-num">${i + 1}</div>
+      <button class="thumb-del" onclick="event.stopPropagation();deleteSlide(${i})"
+              aria-label="Delete slide ${i + 1}" title="Delete">
+        <svg width="7" height="7" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+      </button>
+    </div>`;
+  }).join('');
+
+  const active = container.querySelector('.slide-thumb.active');
+  if (active) active.scrollIntoView({ behavior: 'smooth', block: 'nearest', inline: 'center' });
+}
+
+function updateThumbnailActive() {
+  document.querySelectorAll('.slide-thumb').forEach((el, i) => el.classList.toggle('active', i === state.slide));
+  const active = document.querySelector('.slide-thumb.active');
+  if (active) active.scrollIntoView({ behavior: 'smooth', block: 'nearest', inline: 'center' });
+}
+
+/* ── Thumbnail drag-and-drop reorder ── */
+function thumbDragStart(idx) { _dragFromIdx = idx; }
+
+function thumbDragOver(e, idx) {
+  e.preventDefault();
+  document.querySelectorAll('.slide-thumb').forEach(el => el.classList.remove('drag-over'));
+  const el = document.querySelector(`.slide-thumb[data-idx="${idx}"]`);
+  if (el) el.classList.add('drag-over');
+}
+
+function thumbDragLeave(e) { e.currentTarget.classList.remove('drag-over'); }
+
+function thumbDrop(e, toIdx) {
+  e.preventDefault();
+  document.querySelectorAll('.slide-thumb').forEach(el => el.classList.remove('drag-over'));
+  if (_dragFromIdx === null || _dragFromIdx === toIdx) { _dragFromIdx = null; return; }
+  pushUndo();
+  const [moved] = state.presData.slides.splice(_dragFromIdx, 1);
+  state.presData.slides.splice(toIdx, 0, moved);
+  state.slide  = toIdx;
+  _dragFromIdx = null;
+  refreshSlides();
+}
+
+/* ── Presentation Timer ── */
+function toggleTimer() {
+  if (timerState.running) {
+    clearInterval(timerState.intervalId);
+    timerState.running = false;
+    const btn = document.getElementById('timer-toggle-btn');
+    if (btn) btn.innerHTML = '<svg width="10" height="10" viewBox="0 0 24 24" fill="currentColor"><polygon points="5 3 19 12 5 21 5 3"/></svg>';
+  } else {
+    timerState.running = true;
+    timerState.intervalId = setInterval(() => { timerState.elapsed++; updateTimerDisplay(); }, 1000);
+    const btn = document.getElementById('timer-toggle-btn');
+    if (btn) btn.innerHTML = '<svg width="10" height="10" viewBox="0 0 24 24" fill="currentColor"><rect x="6" y="4" width="4" height="16"/><rect x="14" y="4" width="4" height="16"/></svg>';
+  }
+}
+
+function resetTimer() {
+  clearInterval(timerState.intervalId);
+  timerState.running = false;
+  timerState.elapsed = 0;
+  updateTimerDisplay();
+  const btn = document.getElementById('timer-toggle-btn');
+  if (btn) btn.innerHTML = '<svg width="10" height="10" viewBox="0 0 24 24" fill="currentColor"><polygon points="5 3 19 12 5 21 5 3"/></svg>';
+}
+
+function updateTimerDisplay() {
+  const m  = Math.floor(timerState.elapsed / 60);
+  const s  = timerState.elapsed % 60;
+  const el = document.getElementById('tb-timer');
+  if (el) el.textContent = `${m}:${s.toString().padStart(2, '0')}`;
+}
 
 /* ── Supabase & Auth ── */
 const _sc = window.SUPABASE_CONFIG;
