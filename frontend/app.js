@@ -699,6 +699,32 @@ async function exportReportLatex() {
   }
 }
 
+/* ── Word DOCX Export ── */
+async function exportReportDocx() {
+  if (!window._reportData) { alert('No report loaded.'); return; }
+  const btn = document.getElementById('report-docx-btn');
+  if (btn) { btn.querySelector('.tb-label').textContent = 'Exporting…'; btn.disabled = true; }
+  try {
+    const res = await fetch(`${API}/export/report-docx`, {
+      method:  'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body:    JSON.stringify({ presentation_data: window._reportData }),
+    });
+    if (!res.ok) throw new Error(await res.text());
+    const blob = await res.blob();
+    const url  = URL.createObjectURL(blob);
+    const a    = document.createElement('a');
+    a.href     = url;
+    a.download = (window._reportData.title || 'report').replace(/\s+/g, '_') + '.docx';
+    a.click();
+    URL.revokeObjectURL(url);
+  } catch (e) {
+    alert('Word export failed: ' + e.message);
+  } finally {
+    if (btn) { btn.querySelector('.tb-label').textContent = 'Word'; btn.disabled = false; }
+  }
+}
+
 /* ── Touch Swipe (slides) ── */
 (function initTouchSwipe() {
   let startX = 0;

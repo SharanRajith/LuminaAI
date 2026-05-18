@@ -491,15 +491,15 @@
       </button>
       <div class="tb-title">Report Viewer</div>
       <div class="tb-right">
-        <button class="tb-btn" onclick="exportReportLatex()" aria-label="Download LaTeX source">
+        <button class="tb-btn" id="report-docx-btn" onclick="exportReportDocx()" aria-label="Download as Word document">
           <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true">
-            <path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z"/><polyline points="14 2 14 8 20 8"/><path d="M9 13h3m-3 4h6"/>
+            <path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z"/><polyline points="14 2 14 8 20 8"/><path d="M8 13h2l2 5 2-5h2"/>
           </svg>
-          <span class="tb-label">LaTeX</span>
+          <span class="tb-label">Word</span>
         </button>
-        <button class="tb-btn" id="report-pdf-btn" onclick="exportReportPDF()" aria-label="Download compiled PDF">
+        <button class="tb-btn" id="report-pdf-btn" onclick="exportReportPDF()" aria-label="Download as PDF">
           <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true">
-            <polyline points="6 9 6 2 18 2 18 9"/><path d="M6 18H4a2 2 0 01-2-2v-5a2 2 0 012-2h16a2 2 0 012 2v5a2 2 0 01-2 2h-2"/><rect x="6" y="14" width="12" height="8"/>
+            <path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="9" y1="13" x2="15" y2="13"/><line x1="9" y1="17" x2="15" y2="17"/>
           </svg>
           <span class="tb-label">PDF</span>
         </button>
