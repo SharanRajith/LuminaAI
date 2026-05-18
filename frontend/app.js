@@ -266,33 +266,33 @@ function renderPresentation(data) {
 
 function loadSlideImages(slides, startIdx = 0) {
   slides.forEach((sd, i) => {
-    const idx = startIdx + i;
-    const topic = sd.title || sd.quote || '';
-    if (!topic) return;
+    const idx   = startIdx + i;
+    const topic = sd.title || sd.quote || 'abstract';
     const imgEl = document.getElementById(`slide-img-${idx}`);
     if (!imgEl) return;
 
-    const keyword  = encodeURIComponent(topic.split(' ').slice(0, 3).join(' '));
-    const aiPrompt = encodeURIComponent(`${topic}, professional photography, cinematic lighting, 4k`);
-
-    // Step 1 — instant stock photo from Unsplash
-    const stockUrl = `https://source.unsplash.com/1280x720/?${keyword}`;
+    // Step 1 — instant reliable placeholder (picsum.photos, seeded by topic)
+    const seed     = encodeURIComponent(topic.toLowerCase().replace(/\s+/g, '-').slice(0, 40));
+    const stockUrl = `https://picsum.photos/seed/${seed}/1280/720`;
     imgEl.onload  = () => imgEl.classList.add('loaded');
-    imgEl.onerror = () => imgEl.classList.add('loaded');
+    imgEl.onerror = () => imgEl.classList.add('loaded'); // keep going even if picsum fails
     imgEl.src = stockUrl;
 
-    // Step 2 — swap to Pollinations AI image when ready (~10-15s)
-    const aiUrl = `https://image.pollinations.ai/prompt/${aiPrompt}?width=1280&height=720&nologo=true&seed=${idx}`;
-    const aiImg = new Image();
-    aiImg.onload = () => {
-      imgEl.style.transition = 'opacity .6s ease';
-      imgEl.style.opacity = '0';
-      setTimeout(() => {
-        imgEl.src = aiUrl;
-        imgEl.style.opacity = '1';
-      }, 300);
-    };
-    aiImg.src = aiUrl;
+    // Step 2 — staggered Pollinations AI swap (800 ms gap between slides)
+    setTimeout(() => {
+      const aiPrompt = encodeURIComponent(
+        `${topic}, professional photography, cinematic lighting, 4k, no text`
+      );
+      const seed2 = idx * 37 + 1; // stable unique seed per slide
+      const aiUrl = `https://image.pollinations.ai/prompt/${aiPrompt}?width=1280&height=720&nologo=true&seed=${seed2}`;
+      const aiImg = new Image();
+      aiImg.onload = () => {
+        imgEl.style.transition = 'opacity .5s ease';
+        imgEl.style.opacity    = '0';
+        setTimeout(() => { imgEl.src = aiUrl; imgEl.style.opacity = '1'; }, 250);
+      };
+      aiImg.src = aiUrl;
+    }, i * 800); // stagger: slide 0 → 0ms, slide 1 → 800ms, etc.
   });
 }
 
