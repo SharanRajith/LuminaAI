@@ -182,9 +182,26 @@ select option{background:var(--bg2)}
 .tb-right{display:flex;gap:8px;margin-left:auto}
 .slide-area{flex:1;position:relative;overflow:hidden;display:flex;align-items:center;justify-content:center}
 .slide-wrap{width:100%;height:100%;position:relative}
-.slide{position:absolute;inset:0;display:none;overflow:hidden;animation:slideIn .4s ease}
+.slide{position:absolute;inset:0;display:none;overflow:hidden}
 .slide.active{display:flex}
-@keyframes slideIn{from{opacity:0;transform:translateX(24px)}to{opacity:1;transform:none}}
+
+/* ── Slide transitions ── */
+@keyframes t-fade-in{from{opacity:0}to{opacity:1}}
+@keyframes t-fade-out{from{opacity:1}to{opacity:0}}
+@keyframes t-slide-right{from{transform:translateX(100%)}to{transform:translateX(0)}}
+@keyframes t-slide-left{from{transform:translateX(-100%)}to{transform:translateX(0)}}
+@keyframes t-slide-exit-l{from{transform:translateX(0)}to{transform:translateX(-100%)}}
+@keyframes t-slide-exit-r{from{transform:translateX(0)}to{transform:translateX(100%)}}
+@keyframes t-zoom-in{from{opacity:0;transform:scale(.93)}to{opacity:1;transform:scale(1)}}
+@keyframes t-zoom-out{from{opacity:1;transform:scale(1)}to{opacity:0;transform:scale(1.06)}}
+.slide.t-fade-in{display:flex!important;animation:t-fade-in .35s ease forwards}
+.slide.t-fade-out{display:flex!important;animation:t-fade-out .35s ease forwards}
+.slide.t-slide-right{display:flex!important;animation:t-slide-right .35s ease forwards}
+.slide.t-slide-left{display:flex!important;animation:t-slide-left .35s ease forwards}
+.slide.t-slide-exit-l{display:flex!important;animation:t-slide-exit-l .35s ease forwards}
+.slide.t-slide-exit-r{display:flex!important;animation:t-slide-exit-r .35s ease forwards}
+.slide.t-zoom-in{display:flex!important;animation:t-zoom-in .35s ease forwards}
+.slide.t-zoom-out{display:flex!important;animation:t-zoom-out .35s ease forwards}
 
 /* ── Full-bleed layout (title / quote / stats) ── */
 .slide-bg-wrap{position:absolute;inset:0;z-index:0}

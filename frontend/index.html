@@ -354,6 +354,23 @@
           </select>
         </div>
 
+        <!-- Language — works for both presentation and report -->
+        <div class="form-group">
+          <label for="language">Language</label>
+          <select id="language">
+            <option value="english">English</option>
+            <option value="hindi">Hindi</option>
+            <option value="spanish">Spanish</option>
+            <option value="french">French</option>
+            <option value="german">German</option>
+            <option value="arabic">Arabic</option>
+            <option value="portuguese">Portuguese</option>
+            <option value="chinese">Chinese (Simplified)</option>
+            <option value="japanese">Japanese</option>
+            <option value="korean">Korean</option>
+          </select>
+        </div>
+
         <button class="btn-generate" id="btn-generate" onclick="generate()">
           <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" aria-hidden="true">
             <path d="M13 2L3 14h9l-1 8 10-12h-9l1-8z" />
@@ -440,6 +457,11 @@
         <button class="tb-btn tb-btn-del" onclick="deleteSlide()" aria-label="Delete current slide">
           <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14a2 2 0 01-2 2H8a2 2 0 01-2-2L5 6"/><path d="M10 11v6M14 11v6"/><path d="M9 6V4h6v2"/></svg>
           <span class="tb-label">Del</span>
+        </button>
+        <!-- Transition cycle -->
+        <button class="tb-btn" onclick="cycleTransition()" aria-label="Cycle slide transition" title="Change transition">
+          <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M5 12h14M15 6l6 6-6 6"/></svg>
+          <span class="tb-label" id="trans-label">Fade</span>
         </button>
         <!-- Thumbnails toggle -->
         <button class="tb-btn" id="thumb-toggle-btn" onclick="toggleThumbnails()" aria-label="Toggle slide thumbnail strip" title="Toggle thumbnails">

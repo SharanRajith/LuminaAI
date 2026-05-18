@@ -6,6 +6,7 @@ const state = {
   slide: 0,
   notesVisible: false,
   user: null,
+  transition: 'fade',
 };
 
 const API = window.LUMINA_API_URL || 'http://localhost:8000';
@@ -16,6 +17,9 @@ const undoStack = [];
 const timerState = { running: false, elapsed: 0, intervalId: null };
 let _thumbsVisible = false;
 let _dragFromIdx   = null;
+let _isAnimating   = false;
+const TRANS_DURATION = 350;
+const TRANS_CYCLE = ['fade', 'slide', 'zoom', 'none'];
 
 /* ── Offline Detection ── */
 function syncOnlineStatus() {
@@ -175,6 +179,7 @@ async function generate() {
           slide_count: parseInt(document.getElementById('slide-count').value, 10),
           audience:    document.getElementById('audience').value,
           tone:        document.getElementById('tone').value,
+          language:    document.getElementById('language').value,
         }),
       });
       if (!res.ok) { const e = await res.json(); throw new Error(e.detail || 'Server error'); }
@@ -198,6 +203,7 @@ async function generate() {
           report_type: document.getElementById('report-type').value,
           tone:        document.getElementById('tone').value,
           length:      document.getElementById('report-length').value,
+          language:    document.getElementById('language').value,
         }),
       });
       if (!res.ok) { const e = await res.json(); throw new Error(e.detail || 'Server error'); }
@@ -392,17 +398,52 @@ function esc(str) {
 function goToSlide(n) {
   const slides = document.querySelectorAll('#slide-wrap .slide');
   const dots   = document.querySelectorAll('#slide-dots .dot');
-  if (n < 0 || n >= slides.length) return;
-  slides[state.slide].classList.remove('active');
-  dots[state.slide]?.classList.remove('active');
-  dots[state.slide]?.setAttribute('aria-selected', 'false');
-  state.slide = n;
-  slides[state.slide].classList.add('active');
-  dots[state.slide]?.classList.add('active');
-  dots[state.slide]?.setAttribute('aria-selected', 'true');
-  updateSlideCounter();
-  updateNotes();
-  updateThumbnailActive();
+  if (n < 0 || n >= slides.length || _isAnimating) return;
+
+  const from = state.slide;
+  const T    = state.transition;
+  const dir  = n > from ? 1 : -1;
+
+  dots[from]?.classList.remove('active');
+  dots[from]?.setAttribute('aria-selected', 'false');
+  dots[n]?.classList.add('active');
+  dots[n]?.setAttribute('aria-selected', 'true');
+
+  const finish = () => {
+    state.slide = n;
+    _isAnimating = false;
+    updateSlideCounter();
+    updateNotes();
+    updateThumbnailActive();
+  };
+
+  if (T === 'none' || from === n) {
+    slides[from].classList.remove('active');
+    slides[n].classList.add('active');
+    finish();
+    return;
+  }
+
+  _isAnimating = true;
+
+  let enterCls, exitCls;
+  if (T === 'fade') {
+    enterCls = 't-fade-in';  exitCls = 't-fade-out';
+  } else if (T === 'slide') {
+    enterCls = dir > 0 ? 't-slide-right'  : 't-slide-left';
+    exitCls  = dir > 0 ? 't-slide-exit-l' : 't-slide-exit-r';
+  } else {
+    enterCls = 't-zoom-in';  exitCls = 't-zoom-out';
+  }
+
+  slides[from].classList.add(exitCls);
+  slides[n].classList.add('active', enterCls);
+
+  setTimeout(() => {
+    slides[from].classList.remove('active', exitCls);
+    slides[n].classList.remove(enterCls);
+    finish();
+  }, TRANS_DURATION);
 }
 
 function nextSlide() { goToSlide(state.slide + 1); }
@@ -433,6 +474,14 @@ function toggleFullscreen() {
   } else {
     document.exitFullscreen?.();
   }
+}
+
+function cycleTransition() {
+  const idx = TRANS_CYCLE.indexOf(state.transition);
+  state.transition = TRANS_CYCLE[(idx + 1) % TRANS_CYCLE.length];
+  const label = document.getElementById('trans-label');
+  const names = { fade: 'Fade', slide: 'Slide', zoom: 'Zoom', none: 'None' };
+  if (label) label.textContent = names[state.transition];
 }
 
 /* ── Edit Mode ── */

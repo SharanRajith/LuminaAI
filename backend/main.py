@@ -80,6 +80,10 @@ _VALID_TONES        = {"professional", "casual", "academic", "inspirational", "h
 _VALID_AUDIENCES    = {"general", "executive", "technical", "student", "expert"}
 _VALID_LENGTHS      = {"short", "medium", "long"}
 _VALID_REPORT_TYPES = {"business", "research", "technical", "academic", "marketing"}
+_VALID_LANGUAGES    = {
+    "english", "hindi", "spanish", "french", "german",
+    "arabic", "portuguese", "chinese", "japanese", "korean",
+}
 
 
 class PresentationRequest(BaseModel):
@@ -89,6 +93,7 @@ class PresentationRequest(BaseModel):
     slide_count: int = Field(10, ge=3, le=50)
     audience: str = Field("general")
     tone: str = Field("professional")
+    language: str = Field("english")
 
     @field_validator("theme")
     @classmethod
@@ -111,6 +116,13 @@ class PresentationRequest(BaseModel):
             raise ValueError(f"audience must be one of {sorted(_VALID_AUDIENCES)}")
         return v
 
+    @field_validator("language")
+    @classmethod
+    def validate_language(cls, v):
+        if v not in _VALID_LANGUAGES:
+            raise ValueError(f"language must be one of {sorted(_VALID_LANGUAGES)}")
+        return v
+
 
 class ReportRequest(BaseModel):
     prompt: str = Field(..., min_length=5, max_length=5000)
@@ -118,6 +130,7 @@ class ReportRequest(BaseModel):
     report_type: str = Field("business")
     tone: str = Field("professional")
     length: str = Field("medium")
+    language: str = Field("english")
 
     @field_validator("report_type")
     @classmethod
@@ -138,6 +151,13 @@ class ReportRequest(BaseModel):
     def validate_length(cls, v):
         if v not in _VALID_LENGTHS:
             raise ValueError(f"length must be one of {sorted(_VALID_LENGTHS)}")
+        return v
+
+    @field_validator("language")
+    @classmethod
+    def validate_language(cls, v):
+        if v not in _VALID_LANGUAGES:
+            raise ValueError(f"language must be one of {sorted(_VALID_LANGUAGES)}")
         return v
 
 
@@ -277,6 +297,7 @@ def health():
 @limiter.limit("3/day")
 async def generate_presentation(req: PresentationRequest, request: Request, user_id: Optional[str] = Depends(verify_token)):
     try:
+        lang_instruction = f"- Language: Write ALL content (titles, bullets, notes, subtitles) in {req.language.capitalize()}. Do NOT mix languages.\n" if req.language != "english" else ""
         prompt = f"""You are an expert presentation designer and content strategist.
 Create a comprehensive, engaging presentation on the topic below.
 
@@ -284,7 +305,7 @@ REQUIREMENTS:
 - Exactly {req.slide_count} slides
 - Audience: {req.audience}
 - Tone: {req.tone}
-- Use a variety of slide types for visual interest
+{lang_instruction}- Use a variety of slide types for visual interest
 
 TOPIC: {req.prompt}
 
@@ -341,6 +362,7 @@ Make content substantive and insightful. Vary slide types AND image_position thr
 async def generate_report(req: ReportRequest, request: Request, user_id: Optional[str] = Depends(verify_token)):
     try:
         section_count = {"short": "4-5", "medium": "6-8", "long": "9-12"}.get(req.length, "6-8")
+        lang_instruction = f"- Language: Write ALL content in {req.language.capitalize()}. Do NOT mix languages.\n" if req.language != "english" else ""
 
         prompt = f"""You are an expert analyst and report writer.
 Write a comprehensive, authoritative {req.report_type} report on the topic below.
@@ -348,7 +370,7 @@ Write a comprehensive, authoritative {req.report_type} report on the topic below
 REQUIREMENTS:
 - Tone: {req.tone}
 - Length: {section_count} sections
-- Include executive summary, body sections, conclusion, and recommendations
+{lang_instruction}- Include executive summary, body sections, conclusion, and recommendations
 
 TOPIC: {req.prompt}
 
