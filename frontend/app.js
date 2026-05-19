@@ -91,23 +91,36 @@ async function handleUpload(input) {
   const file = input.files[0];
   if (!file) return;
   const statusEl = document.getElementById('upload-status');
-  statusEl.textContent = 'Uploading…';
+  statusEl.innerHTML = '<span class="upload-spinner"></span> Reading file…';
   const form = new FormData();
   form.append('file', file);
   try {
     const res  = await fetch(`${API}/upload/document`, { method: 'POST', body: form });
     const data = await res.json();
-    if (data.text) {
-      const topic = document.getElementById('topic');
-      topic.value = (topic.value ? topic.value + '\n\n' : '') + data.text;
-      updateCharCount(topic);
-      statusEl.textContent = `✓ ${file.name} loaded`;
-    } else {
-      statusEl.textContent = '✗ No text extracted';
-    }
-  } catch {
-    statusEl.textContent = '✗ Upload failed';
+    if (!res.ok) throw new Error(data.detail || 'Upload failed');
+    state.uploadedContext = data.text;
+    const kb = Math.round(data.chars / 100) / 10;
+    statusEl.innerHTML = `
+      <span class="upload-badge">
+        <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="20 6 9 17 4 12"/></svg>
+        ${file.name} · ${kb}k chars
+        <button class="upload-remove" onclick="clearUpload()" title="Remove file">×</button>
+      </span>`;
+    const topicEl = document.getElementById('topic');
+    if (!topicEl.value.trim()) topicEl.value = 'Create content based on the uploaded document.';
+    updateCharCount(topicEl);
+  } catch(e) {
+    state.uploadedContext = null;
+    statusEl.textContent = '✗ ' + e.message;
   }
+}
+
+function clearUpload() {
+  state.uploadedContext = null;
+  const statusEl = document.getElementById('upload-status');
+  statusEl.textContent = '';
+  const input = document.getElementById('doc-upload');
+  if (input) input.value = '';
 }
 
 /* ── Loading Animation ── */
@@ -175,6 +188,7 @@ async function generate() {
         headers: { 'Content-Type': 'application/json', ...authHeader },
         body: JSON.stringify({
           prompt:      topic,
+          context:     state.uploadedContext || undefined,
           model_name:  'llama-3.3-70b-versatile',
           theme:       state.theme,
           slide_count: parseInt(document.getElementById('slide-count').value, 10),
@@ -209,6 +223,7 @@ async function generate() {
         headers: { 'Content-Type': 'application/json', ...authHeader },
         body: JSON.stringify({
           prompt:      topic,
+          context:     state.uploadedContext || undefined,
           model_name:  'llama-3.3-70b-versatile',
           report_type: document.getElementById('report-type').value,
           tone:        document.getElementById('tone').value,
@@ -1071,20 +1086,24 @@ if (_sc && _sc.url && !_sc.url.includes('your-project-id')) {
 }
 
 function updateNavForUser(isLoggedIn) {
-  const libBtn   = document.getElementById('nav-library');
-  const loginBtn = document.getElementById('nav-login');
+  const libBtn    = document.getElementById('nav-library');
+  const loginBtn  = document.getElementById('nav-login');
   const tierBadge = document.getElementById('nav-tier-badge');
+  const adminBtn  = document.getElementById('nav-admin');
   if (isLoggedIn) {
     libBtn.style.display  = 'block';
     loginBtn.textContent  = 'Sign Out';
     loginBtn.onclick      = handleSignOut;
     fetchUserProfile();
+    const isAdmin = state.user?.email?.toLowerCase() === 'sharanrajithk@gmail.com';
+    if (adminBtn) adminBtn.style.display = isAdmin ? 'block' : 'none';
   } else {
     libBtn.style.display  = 'none';
     loginBtn.textContent  = 'Login / Sign Up';
     loginBtn.onclick      = () => showScreen('auth');
     state.userProfile     = null;
     if (tierBadge) tierBadge.style.display = 'none';
+    if (adminBtn)  adminBtn.style.display  = 'none';
   }
 }
 
@@ -1115,6 +1134,69 @@ function showUpgradeModal(used, limit) {
 
 function closeUpgradeModal() {
   document.getElementById('upgrade-modal').style.display = 'none';
+}
+
+/* ── Admin Dashboard ── */
+async function loadAdminDashboard() {
+  const { data: { session } } = await supabaseClient.auth.getSession();
+  if (!session?.access_token) return;
+  const headers = { 'Authorization': `Bearer ${session.access_token}` };
+
+  // Stats
+  try {
+    const statsRes = await fetch(`${API}/admin/stats`, { headers });
+    if (statsRes.ok) {
+      const s = await statsRes.json();
+      document.getElementById('adm-total-users').textContent   = s.total_users;
+      document.getElementById('adm-premium-users').textContent = s.premium_users;
+      document.getElementById('adm-free-users').textContent    = s.free_users;
+      document.getElementById('adm-total-gens').textContent    = s.total_generations;
+      document.getElementById('adm-ppt-count').textContent     = s.presentations;
+      document.getElementById('adm-rep-count').textContent     = s.reports;
+    }
+  } catch (_) {}
+
+  // Users table
+  const tbody = document.getElementById('adm-users-tbody');
+  tbody.innerHTML = '<tr><td colspan="5" style="color:rgba(255,255,255,.4);padding:20px;text-align:center;">Loading…</td></tr>';
+  try {
+    const usersRes = await fetch(`${API}/admin/users`, { headers });
+    if (!usersRes.ok) throw new Error();
+    const { users } = await usersRes.json();
+    tbody.innerHTML = users.map(u => `
+      <tr>
+        <td class="adm-td">${u.email}</td>
+        <td class="adm-td"><span class="adm-tier-badge adm-tier-${u.tier}">${u.tier === 'premium' ? '★ Premium' : 'Free'}</span></td>
+        <td class="adm-td">${u.generations_used}</td>
+        <td class="adm-td" style="color:rgba(255,255,255,.4);font-size:.8rem;">${u.created_at ? new Date(u.created_at).toLocaleDateString() : '—'}</td>
+        <td class="adm-td">
+          ${u.tier === 'premium'
+            ? `<button class="adm-action-btn adm-revoke" onclick="adminSetTier('${u.id}','free',this)">Revoke</button>`
+            : `<button class="adm-action-btn adm-grant"  onclick="adminSetTier('${u.id}','premium',this)">Grant Premium</button>`}
+        </td>
+      </tr>`).join('');
+  } catch (_) {
+    tbody.innerHTML = '<tr><td colspan="5" style="color:#ff6584;padding:20px;text-align:center;">Failed to load users</td></tr>';
+  }
+}
+
+async function adminSetTier(userId, tier, btn) {
+  btn.disabled = true;
+  btn.textContent = '…';
+  try {
+    const { data: { session } } = await supabaseClient.auth.getSession();
+    const res = await fetch(`${API}/admin/set-tier`, {
+      method:  'POST',
+      headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${session.access_token}` },
+      body:    JSON.stringify({ user_id: userId, tier }),
+    });
+    if (!res.ok) throw new Error();
+    loadAdminDashboard();
+  } catch (_) {
+    btn.disabled = false;
+    btn.textContent = tier === 'premium' ? 'Grant Premium' : 'Revoke';
+    alert('Action failed — try again.');
+  }
 }
 
 async function handleSignOut() {

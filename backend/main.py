@@ -87,7 +87,8 @@ _VALID_LANGUAGES    = {
 
 
 class PresentationRequest(BaseModel):
-    prompt: str = Field(..., min_length=5, max_length=5000)
+    prompt: str = Field(..., min_length=1, max_length=5000)
+    context: Optional[str] = Field(None, max_length=12000)
     model_name: Optional[str] = None
     theme: str = Field("dark")
     slide_count: int = Field(10, ge=3, le=50)
@@ -125,7 +126,8 @@ class PresentationRequest(BaseModel):
 
 
 class ReportRequest(BaseModel):
-    prompt: str = Field(..., min_length=5, max_length=5000)
+    prompt: str = Field(..., min_length=1, max_length=5000)
+    context: Optional[str] = Field(None, max_length=12000)
     model_name: Optional[str] = None
     report_type: str = Field("business")
     tone: str = Field("professional")
@@ -367,12 +369,109 @@ async def grant_premium(request: Request):
     return {"status": "ok", "user_id": user_id, "tier": "premium"}
 
 
+def verify_admin(authorization: Optional[str] = Header(None)) -> str:
+    """Dependency: verifies the caller is the admin (by email match)."""
+    if not supabase or not authorization:
+        raise HTTPException(status_code=403, detail="Unauthorized")
+    try:
+        token = authorization.replace("Bearer ", "")
+        user  = supabase.auth.get_user(token)
+        if user and user.user and (user.user.email or "").lower() == ADMIN_EMAIL.lower():
+            return user.user.id
+    except Exception:
+        pass
+    raise HTTPException(status_code=403, detail="Unauthorized")
+
+
+@app.post("/upload/document")
+async def upload_document(file: UploadFile = File(...), _user_id: Optional[str] = Depends(verify_token)):
+    filename = (file.filename or "").lower()
+    if not any(filename.endswith(ext) for ext in (".pdf", ".docx", ".txt")):
+        raise HTTPException(status_code=400, detail="Unsupported file type. Upload PDF, DOCX, or TXT.")
+    content = await file.read()
+    if len(content) > 10 * 1024 * 1024:
+        raise HTTPException(status_code=413, detail="File too large (max 10 MB).")
+    text = ""
+    try:
+        if filename.endswith(".pdf"):
+            import pdfplumber, io as _io
+            with pdfplumber.open(_io.BytesIO(content)) as pdf:
+                for page in pdf.pages:
+                    text += (page.extract_text() or "") + "\n"
+        elif filename.endswith(".docx"):
+            from docx import Document as DocxDoc
+            import io as _io
+            doc = DocxDoc(_io.BytesIO(content))
+            text = "\n".join(p.text for p in doc.paragraphs if p.text.strip())
+        else:
+            text = content.decode("utf-8", errors="ignore")
+    except Exception as e:
+        raise HTTPException(status_code=422, detail=f"Could not parse file: {e}")
+    text = text.strip()[:10000]
+    if not text:
+        raise HTTPException(status_code=422, detail="No text could be extracted from this file.")
+    return {"text": text, "filename": file.filename, "chars": len(text)}
+
+
+@app.get("/admin/stats")
+async def admin_stats(_admin_id: str = Depends(verify_admin)):
+    profiles_res  = supabase.table("profiles").select("tier,generations_used").execute()
+    profiles      = profiles_res.data or []
+    creations_res = supabase.table("creations").select("type").execute()
+    creations     = creations_res.data or []
+    return {
+        "total_users":        len(profiles),
+        "premium_users":      sum(1 for p in profiles if p["tier"] == "premium"),
+        "free_users":         sum(1 for p in profiles if p["tier"] == "free"),
+        "total_generations":  sum(p["generations_used"] for p in profiles),
+        "presentations":      sum(1 for c in creations if c["type"] == "presentation"),
+        "reports":            sum(1 for c in creations if c["type"] == "report"),
+    }
+
+
+@app.get("/admin/users")
+async def admin_users(_admin_id: str = Depends(verify_admin)):
+    profiles_res = supabase.table("profiles").select("*").order("created_at", desc=True).execute()
+    profiles     = {p["id"]: p for p in (profiles_res.data or [])}
+    try:
+        auth_list  = supabase.auth.admin.list_users()
+        auth_users = getattr(auth_list, "users", auth_list) or []
+    except Exception:
+        auth_users = []
+    users = []
+    for au in auth_users:
+        p = profiles.get(au.id, {})
+        users.append({
+            "id":               au.id,
+            "email":            au.email or "—",
+            "tier":             p.get("tier", "free"),
+            "generations_used": p.get("generations_used", 0),
+            "created_at":       p.get("created_at") or str(getattr(au, "created_at", "")),
+        })
+    return {"users": users}
+
+
+@app.post("/admin/set-tier")
+async def admin_set_tier(body: dict, _admin_id: str = Depends(verify_admin)):
+    user_id = body.get("user_id", "").strip()
+    tier    = body.get("tier", "").strip()
+    if not user_id or tier not in ("free", "premium"):
+        raise HTTPException(status_code=400, detail="user_id and tier ('free'|'premium') required")
+    supabase.table("profiles").upsert({"id": user_id, "tier": tier}).execute()
+    logger.info("Admin set tier=%s for user %s", tier, user_id)
+    return {"status": "ok", "user_id": user_id, "tier": tier}
+
+
 @app.post("/generate/presentation")
 @limiter.limit("3/day")
 async def generate_presentation(req: PresentationRequest, request: Request, user_id: Optional[str] = Depends(verify_token)):
     check_tier_and_increment(user_id)
     try:
         lang_instruction = f"- Language: Write ALL content (titles, bullets, notes, subtitles) in {req.language.capitalize()}. Do NOT mix languages.\n" if req.language != "english" else ""
+        if req.context:
+            content_section = f"DOCUMENT CONTENT (base the presentation on this):\n{req.context[:8000]}\n\nUSER INSTRUCTIONS: {req.prompt}"
+        else:
+            content_section = f"TOPIC: {req.prompt}"
         prompt = f"""You are an expert presentation designer and content strategist.
 Create a comprehensive, engaging presentation on the topic below.
 
@@ -382,7 +481,7 @@ REQUIREMENTS:
 - Tone: {req.tone}
 {lang_instruction}- Use a variety of slide types for visual interest
 
-TOPIC: {req.prompt}
+{content_section}
 
 Return ONLY valid JSON (no markdown fences) matching this schema exactly.
 CRITICAL: Do NOT use HTML tags (like <h1>) or Markdown inside JSON values. Use plain text only!
@@ -439,6 +538,10 @@ async def generate_report(req: ReportRequest, request: Request, user_id: Optiona
     try:
         section_count = {"short": "4-5", "medium": "6-8", "long": "9-12"}.get(req.length, "6-8")
         lang_instruction = f"- Language: Write ALL content in {req.language.capitalize()}. Do NOT mix languages.\n" if req.language != "english" else ""
+        if req.context:
+            content_section = f"DOCUMENT CONTENT (base the report on this):\n{req.context[:8000]}\n\nUSER INSTRUCTIONS: {req.prompt}"
+        else:
+            content_section = f"TOPIC: {req.prompt}"
 
         prompt = f"""You are an expert analyst and report writer.
 Write a comprehensive, authoritative {req.report_type} report on the topic below.
@@ -448,7 +551,7 @@ REQUIREMENTS:
 - Length: {section_count} sections
 {lang_instruction}- Include executive summary, body sections, conclusion, and recommendations
 
-TOPIC: {req.prompt}
+{content_section}
 
 Return ONLY valid JSON (no markdown fences) matching this schema exactly.
 CRITICAL: Do NOT use HTML tags (like <h1>) or Markdown inside JSON values. Use plain text only!

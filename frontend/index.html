@@ -74,6 +74,7 @@
     <div class="nav-links">
       <button class="nav-btn" onclick="showScreen('home')">Home</button>
       <button class="nav-btn" id="nav-library" onclick="showScreen('library'); loadLibrary();" style="display:none">Library</button>
+      <button class="nav-btn nav-btn-admin" id="nav-admin" onclick="showScreen('admin'); loadAdminDashboard();" style="display:none">⚙ Admin</button>
       <span id="nav-tier-badge" class="nav-tier-badge" style="display:none" onclick="if(this.classList.contains('nav-tier-premium')){}else{showUpgradeModal(state.userProfile?.generations_used??0,state.userProfile?.limit??5)}" title="Your plan"></span>
       <button class="nav-btn" id="nav-login" onclick="showScreen('auth')">Login / Sign Up</button>
       <button class="nav-btn nav-btn-primary" onclick="navigateToCreate()">
@@ -728,6 +729,64 @@
         style="display: grid; grid-template-columns: repeat(auto-fill, minmax(280px, 1fr)); gap: 20px;"
         role="list" aria-live="polite">
         <div style="color: rgba(255,255,255,0.5);">Please log in to view your library.</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ═══════════════════ ADMIN DASHBOARD ═══════════════════ -->
+  <div id="screen-admin" class="screen" role="main">
+    <div class="adm-layout">
+      <div class="adm-header">
+        <button class="back-btn" onclick="showScreen('home')">← Back</button>
+        <h1 class="adm-title">Admin Dashboard</h1>
+        <button class="adm-refresh-btn" onclick="loadAdminDashboard()">↻ Refresh</button>
+      </div>
+
+      <!-- Stats row -->
+      <div class="adm-stats-grid">
+        <div class="adm-stat-card">
+          <div class="adm-stat-val" id="adm-total-users">—</div>
+          <div class="adm-stat-lbl">Total Users</div>
+        </div>
+        <div class="adm-stat-card adm-stat-premium">
+          <div class="adm-stat-val" id="adm-premium-users">—</div>
+          <div class="adm-stat-lbl">Premium</div>
+        </div>
+        <div class="adm-stat-card">
+          <div class="adm-stat-val" id="adm-free-users">—</div>
+          <div class="adm-stat-lbl">Free Tier</div>
+        </div>
+        <div class="adm-stat-card">
+          <div class="adm-stat-val" id="adm-total-gens">—</div>
+          <div class="adm-stat-lbl">Generations</div>
+        </div>
+        <div class="adm-stat-card">
+          <div class="adm-stat-val" id="adm-ppt-count">—</div>
+          <div class="adm-stat-lbl">Presentations</div>
+        </div>
+        <div class="adm-stat-card">
+          <div class="adm-stat-val" id="adm-rep-count">—</div>
+          <div class="adm-stat-lbl">Reports</div>
+        </div>
+      </div>
+
+      <!-- Users table -->
+      <div class="adm-table-wrap">
+        <h2 class="adm-section-title">All Users</h2>
+        <table class="adm-table">
+          <thead>
+            <tr>
+              <th class="adm-th">Email</th>
+              <th class="adm-th">Tier</th>
+              <th class="adm-th">Generations</th>
+              <th class="adm-th">Joined</th>
+              <th class="adm-th">Action</th>
+            </tr>
+          </thead>
+          <tbody id="adm-users-tbody">
+            <tr><td colspan="5" style="color:rgba(255,255,255,.4);padding:30px;text-align:center;">Loading…</td></tr>
+          </tbody>
+        </table>
       </div>
     </div>
   </div>

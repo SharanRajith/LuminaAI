@@ -142,6 +142,11 @@ select option{background:var(--bg2)}
 .upload-label{display:inline-flex;align-items:center;gap:6px;background:var(--card);border:1px solid var(--border);border-radius:8px;padding:7px 14px;font-size:.82rem;color:var(--text2);cursor:pointer;transition:.2s}
 .upload-label:hover{color:var(--text);border-color:var(--acc)}
 .upload-status{font-size:.8rem;color:var(--acc)}
+.upload-badge{display:inline-flex;align-items:center;gap:6px;background:rgba(108,99,255,.15);border:1px solid rgba(108,99,255,.35);border-radius:20px;padding:4px 10px;font-size:.8rem;color:#a78bfa}
+.upload-remove{background:none;border:none;color:rgba(167,139,250,.6);cursor:pointer;font-size:1rem;padding:0 2px;line-height:1}
+.upload-remove:hover{color:#ff6584}
+@keyframes spin{to{transform:rotate(360deg)}}
+.upload-spinner{display:inline-block;width:10px;height:10px;border:2px solid rgba(108,99,255,.3);border-top-color:#6c63ff;border-radius:50%;animation:spin .7s linear infinite}
 .form-row{display:grid;grid-template-columns:1fr 1fr;gap:12px}
 .theme-picker{display:flex;gap:8px;flex-wrap:wrap}
 .theme-opt{display:flex;flex-direction:column;align-items:center;gap:6px;cursor:pointer;padding:8px;border-radius:10px;border:2px solid transparent;transition:.2s}
@@ -488,4 +493,48 @@ select option{background:var(--bg2)}
   .report-main-title,.section-heading{color:#111}
   .exec-text,.section-content,.subsection-content,.report-conclusion p,.rec-list li{color:#333}
   .exec-summary,.report-conclusion,.highlight-card,.rec-list li{border-color:#ddd;background:#f9f9f9}
+}
+
+/* ── Admin nav button ── */
+.nav-btn-admin{color:#ffc700!important;border:1px solid rgba(255,199,0,.3)!important}
+.nav-btn-admin:hover{background:rgba(255,199,0,.1)!important;border-color:rgba(255,199,0,.5)!important}
+
+/* ── Admin Dashboard ── */
+.adm-layout{max-width:1100px;margin:0 auto;padding:40px 24px;width:100%}
+.adm-header{display:flex;align-items:center;gap:16px;margin-bottom:32px}
+.adm-title{font-size:1.6rem;font-weight:800;color:#fff;margin:0;flex:1}
+.adm-refresh-btn{background:rgba(255,255,255,.07);border:1px solid var(--border);color:var(--text2);padding:8px 16px;border-radius:10px;cursor:pointer;font-size:.85rem;transition:.2s}
+.adm-refresh-btn:hover{background:rgba(255,255,255,.12);color:#fff}
+
+.adm-stats-grid{display:grid;grid-template-columns:repeat(6,1fr);gap:14px;margin-bottom:36px}
+.adm-stat-card{background:var(--card);border:1px solid var(--border);border-radius:14px;padding:20px 16px;text-align:center}
+.adm-stat-card.adm-stat-premium{border-color:rgba(255,199,0,.35);background:rgba(255,199,0,.07)}
+.adm-stat-val{font-size:2rem;font-weight:800;color:#fff;line-height:1}
+.adm-stat-premium .adm-stat-val{color:#ffc700}
+.adm-stat-lbl{font-size:.75rem;color:var(--text3);margin-top:6px;font-weight:500;text-transform:uppercase;letter-spacing:.04em}
+
+.adm-table-wrap{background:var(--card);border:1px solid var(--border);border-radius:16px;overflow:hidden}
+.adm-section-title{font-size:1rem;font-weight:700;color:#fff;padding:18px 20px 0;margin:0}
+.adm-table{width:100%;border-collapse:collapse}
+.adm-th{padding:12px 16px;font-size:.78rem;font-weight:600;color:var(--text3);text-transform:uppercase;letter-spacing:.05em;text-align:left;border-bottom:1px solid var(--border);background:rgba(0,0,0,.2)}
+.adm-td{padding:14px 16px;font-size:.88rem;color:var(--text2);border-bottom:1px solid rgba(255,255,255,.05)}
+.adm-table tbody tr:last-child .adm-td{border-bottom:none}
+.adm-table tbody tr:hover .adm-td{background:rgba(255,255,255,.03)}
+
+.adm-tier-badge{display:inline-block;padding:3px 10px;border-radius:12px;font-size:.76rem;font-weight:700}
+.adm-tier-premium{background:rgba(255,199,0,.15);border:1px solid rgba(255,199,0,.35);color:#ffc700}
+.adm-tier-free{background:rgba(255,255,255,.07);border:1px solid rgba(255,255,255,.12);color:rgba(255,255,255,.5)}
+
+.adm-action-btn{padding:6px 14px;border-radius:8px;font-size:.78rem;font-weight:600;cursor:pointer;border:none;transition:.2s}
+.adm-grant{background:rgba(108,99,255,.2);color:#a78bfa;border:1px solid rgba(108,99,255,.35)}
+.adm-grant:hover{background:rgba(108,99,255,.4);color:#fff}
+.adm-revoke{background:rgba(255,101,132,.15);color:#ff6584;border:1px solid rgba(255,101,132,.3)}
+.adm-revoke:hover{background:rgba(255,101,132,.35);color:#fff}
+.adm-action-btn:disabled{opacity:.4;cursor:not-allowed}
+
+@media(max-width:768px){
+  .adm-stats-grid{grid-template-columns:repeat(3,1fr)}
+  .adm-layout{padding:20px 16px}
+  .adm-table{font-size:.8rem}
+  .adm-th,.adm-td{padding:10px 12px}
 }
