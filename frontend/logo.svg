@@ -1,0 +1,22 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64">
+  <defs>
+    <linearGradient id="g" x1="0" y1="0" x2="64" y2="64" gradientUnits="userSpaceOnUse">
+      <stop offset="0%" stop-color="#6c63ff"/>
+      <stop offset="100%" stop-color="#ff6584"/>
+    </linearGradient>
+    <radialGradient id="shine" cx="35%" cy="30%" r="60%">
+      <stop offset="0%" stop-color="rgba(255,255,255,0.25)"/>
+      <stop offset="100%" stop-color="rgba(255,255,255,0)"/>
+    </radialGradient>
+  </defs>
+  <!-- Rounded square background -->
+  <rect width="64" height="64" rx="16" fill="url(#g)"/>
+  <rect width="64" height="64" rx="16" fill="url(#shine)"/>
+  <!-- 4-pointed sparkle / light burst -->
+  <path d="M32 11 L35.8 27.2 L52 32 L35.8 36.8 L32 53 L28.2 36.8 L12 32 L28.2 27.2 Z" fill="white"/>
+  <!-- Small accent dots at corners of the sparkle -->
+  <circle cx="32" cy="7"  r="2.2" fill="rgba(255,255,255,0.55)"/>
+  <circle cx="57" cy="32" r="2.2" fill="rgba(255,255,255,0.55)"/>
+  <circle cx="32" cy="57" r="2.2" fill="rgba(255,255,255,0.55)"/>
+  <circle cx="7"  cy="32" r="2.2" fill="rgba(255,255,255,0.55)"/>
+</svg>

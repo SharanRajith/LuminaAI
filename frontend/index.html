@@ -4,9 +4,29 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Lumina AI — Presentation & Report Maker</title>
-  <meta name="description"
-    content="Create stunning AI-powered presentations and professional reports in seconds with Ollama." />
+  <title>Lumina AI — AI Presentations & Reports</title>
+  <meta name="description" content="Create stunning AI-powered presentations and professional reports in seconds. Export as PPTX, PDF, or Word. 10 languages supported." />
+
+  <!-- Favicon -->
+  <link rel="icon" href="logo.svg" type="image/svg+xml" />
+  <link rel="apple-touch-icon" href="logo.svg" />
+
+  <!-- Open Graph (social sharing) -->
+  <meta property="og:type"        content="website" />
+  <meta property="og:url"         content="https://luminaai25.netlify.app/" />
+  <meta property="og:title"       content="Lumina AI — AI Presentations & Reports" />
+  <meta property="og:description" content="Transform any topic into a polished presentation or professional report in seconds. Free, fast, and beautiful." />
+  <meta property="og:image"       content="https://luminaai25.netlify.app/og-image.svg" />
+
+  <!-- Twitter Card -->
+  <meta name="twitter:card"        content="summary_large_image" />
+  <meta name="twitter:title"       content="Lumina AI — AI Presentations & Reports" />
+  <meta name="twitter:description" content="Transform any topic into a polished presentation or professional report in seconds." />
+  <meta name="twitter:image"       content="https://luminaai25.netlify.app/og-image.svg" />
+
+  <!-- Theme colour (mobile browser chrome) -->
+  <meta name="theme-color" content="#6c63ff" />
+
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
   <link
@@ -30,15 +50,23 @@
     <div class="nav-brand" onclick="showScreen('home')" role="button" tabindex="0" aria-label="Lumina AI home">
       <div class="nav-logo" aria-hidden="true">
         <svg viewBox="0 0 36 36" fill="none" xmlns="http://www.w3.org/2000/svg">
-          <polygon points="18,2 34,11 34,25 18,34 2,25 2,11" fill="url(#lg1)" />
-          <polygon points="18,9 27,14 27,22 18,27 9,22 9,14" fill="rgba(255,255,255,0.15)" />
-          <circle cx="18" cy="18" r="4" fill="white" />
           <defs>
-            <linearGradient id="lg1" x1="0" y1="0" x2="36" y2="36" gradientUnits="userSpaceOnUse">
-              <stop offset="0%" stop-color="#6c63ff" />
-              <stop offset="100%" stop-color="#ff6584" />
+            <linearGradient id="nav-g" x1="0" y1="0" x2="36" y2="36" gradientUnits="userSpaceOnUse">
+              <stop offset="0%" stop-color="#6c63ff"/>
+              <stop offset="100%" stop-color="#ff6584"/>
             </linearGradient>
+            <radialGradient id="nav-shine" cx="35%" cy="30%" r="65%">
+              <stop offset="0%" stop-color="rgba(255,255,255,0.28)"/>
+              <stop offset="100%" stop-color="rgba(255,255,255,0)"/>
+            </radialGradient>
           </defs>
+          <rect width="36" height="36" rx="9" fill="url(#nav-g)"/>
+          <rect width="36" height="36" rx="9" fill="url(#nav-shine)"/>
+          <path d="M18 6.5 L20.2 15.8 L29.5 18 L20.2 20.2 L18 29.5 L15.8 20.2 L6.5 18 L15.8 15.8 Z" fill="white"/>
+          <circle cx="18" cy="4"  r="1.4" fill="rgba(255,255,255,0.55)"/>
+          <circle cx="32" cy="18" r="1.4" fill="rgba(255,255,255,0.55)"/>
+          <circle cx="18" cy="32" r="1.4" fill="rgba(255,255,255,0.55)"/>
+          <circle cx="4"  cy="18" r="1.4" fill="rgba(255,255,255,0.55)"/>
         </svg>
       </div>
       <span class="nav-name">Lumina <span>AI</span></span>
@@ -400,14 +428,23 @@
     <div class="loading-center">
       <div class="loading-logo" aria-hidden="true">
         <svg viewBox="0 0 36 36" fill="none" xmlns="http://www.w3.org/2000/svg" width="64" height="64">
-          <polygon points="18,2 34,11 34,25 18,34 2,25 2,11" fill="url(#lg2)" />
-          <circle cx="18" cy="18" r="5" fill="white" opacity="0.9" />
           <defs>
             <linearGradient id="lg2" x1="0" y1="0" x2="36" y2="36" gradientUnits="userSpaceOnUse">
-              <stop offset="0%" stop-color="#6c63ff" />
-              <stop offset="100%" stop-color="#ff6584" />
+              <stop offset="0%" stop-color="#6c63ff"/>
+              <stop offset="100%" stop-color="#ff6584"/>
             </linearGradient>
+            <radialGradient id="lg2-shine" cx="35%" cy="30%" r="65%">
+              <stop offset="0%" stop-color="rgba(255,255,255,0.28)"/>
+              <stop offset="100%" stop-color="rgba(255,255,255,0)"/>
+            </radialGradient>
           </defs>
+          <rect width="36" height="36" rx="9" fill="url(#lg2)"/>
+          <rect width="36" height="36" rx="9" fill="url(#lg2-shine)"/>
+          <path d="M18 6.5 L20.2 15.8 L29.5 18 L20.2 20.2 L18 29.5 L15.8 20.2 L6.5 18 L15.8 15.8 Z" fill="white"/>
+          <circle cx="18" cy="4"  r="1.4" fill="rgba(255,255,255,0.55)"/>
+          <circle cx="32" cy="18" r="1.4" fill="rgba(255,255,255,0.55)"/>
+          <circle cx="18" cy="32" r="1.4" fill="rgba(255,255,255,0.55)"/>
+          <circle cx="4"  cy="18" r="1.4" fill="rgba(255,255,255,0.55)"/>
         </svg>
       </div>
       <h2 class="loading-title">AI is crafting your <span id="loading-type">presentation</span>…</h2>
