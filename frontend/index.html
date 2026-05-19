@@ -74,6 +74,7 @@
     <div class="nav-links">
       <button class="nav-btn" onclick="showScreen('home')">Home</button>
       <button class="nav-btn" id="nav-library" onclick="showScreen('library'); loadLibrary();" style="display:none">Library</button>
+      <span id="nav-tier-badge" class="nav-tier-badge" style="display:none" onclick="if(this.classList.contains('nav-tier-premium')){}else{showUpgradeModal(state.userProfile?.generations_used??0,state.userProfile?.limit??5)}" title="Your plan"></span>
       <button class="nav-btn" id="nav-login" onclick="showScreen('auth')">Login / Sign Up</button>
       <button class="nav-btn nav-btn-primary" onclick="navigateToCreate()">
         <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" aria-hidden="true">
@@ -83,6 +84,29 @@
       </button>
     </div>
   </nav>
+
+  <!-- ═══════════════════ UPGRADE MODAL ═══════════════════ -->
+  <div id="upgrade-modal" style="display:none;position:fixed;inset:0;z-index:9999;background:rgba(0,0,0,.7);backdrop-filter:blur(6px);align-items:center;justify-content:center;" role="dialog" aria-modal="true" aria-labelledby="upgrade-title">
+    <div style="background:linear-gradient(135deg,#13132a,#1e1e40);border:1px solid rgba(108,99,255,.35);border-radius:20px;padding:40px 36px;max-width:440px;width:90%;text-align:center;position:relative;">
+      <button onclick="closeUpgradeModal()" style="position:absolute;top:14px;right:16px;background:none;border:none;color:rgba(255,255,255,.5);font-size:1.4rem;cursor:pointer;" aria-label="Close">&times;</button>
+      <div style="font-size:2.5rem;margin-bottom:12px;">🔒</div>
+      <h2 id="upgrade-title" style="color:#fff;font-size:1.4rem;margin:0 0 8px;">Free Tier Limit Reached</h2>
+      <p style="color:rgba(255,255,255,.6);font-size:.95rem;margin:0 0 20px;">You've used <strong style="color:#fff"><span id="upgrade-used">5</span>/<span id="upgrade-limit">5</span></strong> free generations.</p>
+      <div style="background:rgba(108,99,255,.12);border:1px solid rgba(108,99,255,.3);border-radius:12px;padding:18px 20px;margin-bottom:24px;text-align:left;">
+        <p style="color:#a78bfa;font-weight:700;margin:0 0 10px;font-size:.9rem;">✨ Premium includes:</p>
+        <ul style="color:rgba(255,255,255,.75);font-size:.88rem;margin:0;padding-left:18px;line-height:1.9;">
+          <li>Unlimited presentations &amp; reports</li>
+          <li>Priority generation speed</li>
+          <li>All themes &amp; languages</li>
+          <li>Full PPTX / PDF / DOCX export</li>
+        </ul>
+      </div>
+      <a href="mailto:dhiwaretech@gmail.com?subject=Lumina%20AI%20Premium%20Access&body=Hi%2C%20I%20would%20like%20to%20request%20premium%20access%20for%20my%20account." style="display:block;background:linear-gradient(135deg,#6c63ff,#ff6584);color:#fff;font-weight:700;font-size:1rem;padding:14px 28px;border-radius:12px;text-decoration:none;margin-bottom:12px;">
+        Request Premium Access
+      </a>
+      <p style="color:rgba(255,255,255,.35);font-size:.78rem;margin:0;">Email dhiwaretech@gmail.com · Usually approved within 24 hours</p>
+    </div>
+  </div>
 
   <!-- ═══════════════════ HOME ═══════════════════ -->
   <div id="screen-home" class="screen active">

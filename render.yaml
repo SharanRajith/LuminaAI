@@ -14,3 +14,5 @@ services:
         sync: false
       - key: CORS_ORIGIN
         value: https://luminaai25.netlify.app
+      - key: ADMIN_SECRET_KEY
+        sync: false

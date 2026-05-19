@@ -51,6 +51,9 @@ a{color:inherit;text-decoration:none}
 .nav-btn:hover{color:var(--text);background:var(--card)}
 .nav-btn.nav-btn-primary{display:flex;align-items:center;gap:6px;background:linear-gradient(135deg,var(--acc),var(--acc2));color:#fff;padding:8px 18px}
 .nav-btn.nav-btn-primary:hover{opacity:.9;transform:translateY(-1px)}
+.nav-tier-badge{display:inline-flex;align-items:center;padding:4px 12px;border-radius:20px;font-size:.78rem;font-weight:700;letter-spacing:.02em;cursor:pointer;background:rgba(255,255,255,.08);border:1px solid rgba(255,255,255,.15);color:rgba(255,255,255,.7);white-space:nowrap;transition:.2s}
+.nav-tier-badge:hover{background:rgba(108,99,255,.2);border-color:rgba(108,99,255,.4)}
+.nav-tier-premium{background:linear-gradient(135deg,rgba(255,199,0,.15),rgba(255,140,0,.15));border-color:rgba(255,199,0,.4);color:#ffc700;cursor:default}
 
 /* ── Hero ── */
 .hero{position:relative;min-height:100vh;display:flex;align-items:center;padding:80px 6vw 60px;gap:60px;overflow:hidden}

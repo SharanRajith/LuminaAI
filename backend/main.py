@@ -286,6 +286,35 @@ def verify_token(authorization: Optional[str] = Header(None)) -> Optional[str]:
         logger.warning("Token verification failed: %s", e)
         return None
 
+# ─────────────────────────── Tier System ──────────────────────
+
+FREE_TIER_LIMIT   = 5
+ADMIN_SECRET_KEY  = os.environ.get("ADMIN_SECRET_KEY", "")
+
+def _get_or_create_profile(user_id: str) -> dict:
+    res = supabase.table("profiles").select("*").eq("id", user_id).execute()
+    if res.data:
+        return res.data[0]
+    new = supabase.table("profiles").insert({
+        "id": user_id, "tier": "free", "generations_used": 0
+    }).execute()
+    return new.data[0]
+
+def check_tier_and_increment(user_id: Optional[str]):
+    """Raise 403 if free tier limit reached; otherwise increment usage counter."""
+    if not supabase or not user_id:
+        return  # unauthenticated users pass through (IP rate-limiter still applies)
+    profile = _get_or_create_profile(user_id)
+    if profile["tier"] == "premium":
+        return
+    used = profile["generations_used"]
+    if used >= FREE_TIER_LIMIT:
+        raise HTTPException(
+            status_code=403,
+            detail=f"limit_reached:{used}:{FREE_TIER_LIMIT}"
+        )
+    supabase.table("profiles").update({"generations_used": used + 1}).eq("id", user_id).execute()
+
 # ─────────────────────────── Routes ───────────────────────────
 
 @app.get("/health")
@@ -293,9 +322,36 @@ def health():
     return {"status": "ok"}
 
 
+@app.get("/user/profile")
+async def get_user_profile(user_id: Optional[str] = Depends(verify_token)):
+    if not user_id:
+        raise HTTPException(status_code=401, detail="Not authenticated")
+    profile = _get_or_create_profile(user_id)
+    return {
+        "tier":             profile["tier"],
+        "generations_used": profile["generations_used"],
+        "limit":            FREE_TIER_LIMIT if profile["tier"] == "free" else None,
+    }
+
+
+@app.post("/admin/grant-premium")
+async def grant_premium(request: Request):
+    key = request.headers.get("X-Admin-Key", "")
+    if not ADMIN_SECRET_KEY or key != ADMIN_SECRET_KEY:
+        raise HTTPException(status_code=403, detail="Unauthorized")
+    body = await request.json()
+    user_id = body.get("user_id", "").strip()
+    if not user_id:
+        raise HTTPException(status_code=400, detail="user_id required")
+    supabase.table("profiles").upsert({"id": user_id, "tier": "premium"}).execute()
+    logger.info("Granted premium to user %s", user_id)
+    return {"status": "ok", "user_id": user_id, "tier": "premium"}
+
+
 @app.post("/generate/presentation")
 @limiter.limit("3/day")
 async def generate_presentation(req: PresentationRequest, request: Request, user_id: Optional[str] = Depends(verify_token)):
+    check_tier_and_increment(user_id)
     try:
         lang_instruction = f"- Language: Write ALL content (titles, bullets, notes, subtitles) in {req.language.capitalize()}. Do NOT mix languages.\n" if req.language != "english" else ""
         prompt = f"""You are an expert presentation designer and content strategist.
@@ -360,6 +416,7 @@ Make content substantive and insightful. Vary slide types AND image_position thr
 @app.post("/generate/report")
 @limiter.limit("3/day")
 async def generate_report(req: ReportRequest, request: Request, user_id: Optional[str] = Depends(verify_token)):
+    check_tier_and_increment(user_id)
     try:
         section_count = {"short": "4-5", "medium": "6-8", "long": "9-12"}.get(req.length, "6-8")
         lang_instruction = f"- Language: Write ALL content in {req.language.capitalize()}. Do NOT mix languages.\n" if req.language != "english" else ""

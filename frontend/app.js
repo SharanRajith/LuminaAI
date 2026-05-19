@@ -6,6 +6,7 @@ const state = {
   slide: 0,
   notesVisible: false,
   user: null,
+  userProfile: null,
   transition: 'fade',
 };
 
@@ -182,7 +183,16 @@ async function generate() {
           language:    document.getElementById('language').value,
         }),
       });
-      if (!res.ok) { const e = await res.json(); throw new Error(e.detail || 'Server error'); }
+      if (!res.ok) {
+        const e = await res.json();
+        const detail = e.detail || 'Server error';
+        if (typeof detail === 'string' && detail.startsWith('limit_reached:')) {
+          finishLoading(); showScreen('create');
+          const [, used, limit] = detail.split(':');
+          showUpgradeModal(+used, +limit); return;
+        }
+        throw new Error(detail);
+      }
       const data = await res.json();
       finishLoading();
       setTimeout(() => { renderPresentation(data); showScreen('presentation'); }, 600);
@@ -206,7 +216,16 @@ async function generate() {
           language:    document.getElementById('language').value,
         }),
       });
-      if (!res.ok) { const e = await res.json(); throw new Error(e.detail || 'Server error'); }
+      if (!res.ok) {
+        const e = await res.json();
+        const detail = e.detail || 'Server error';
+        if (typeof detail === 'string' && detail.startsWith('limit_reached:')) {
+          finishLoading(); showScreen('create');
+          const [, used, limit] = detail.split(':');
+          showUpgradeModal(+used, +limit); return;
+        }
+        throw new Error(detail);
+      }
       const data = await res.json();
       finishLoading();
       setTimeout(() => { renderReport(data); showScreen('report'); }, 600);
@@ -1054,15 +1073,48 @@ if (_sc && _sc.url && !_sc.url.includes('your-project-id')) {
 function updateNavForUser(isLoggedIn) {
   const libBtn   = document.getElementById('nav-library');
   const loginBtn = document.getElementById('nav-login');
+  const tierBadge = document.getElementById('nav-tier-badge');
   if (isLoggedIn) {
     libBtn.style.display  = 'block';
     loginBtn.textContent  = 'Sign Out';
     loginBtn.onclick      = handleSignOut;
+    fetchUserProfile();
   } else {
     libBtn.style.display  = 'none';
     loginBtn.textContent  = 'Login / Sign Up';
     loginBtn.onclick      = () => showScreen('auth');
+    state.userProfile     = null;
+    if (tierBadge) tierBadge.style.display = 'none';
   }
+}
+
+async function fetchUserProfile() {
+  const tierBadge = document.getElementById('nav-tier-badge');
+  try {
+    const { data: { session } } = await supabaseClient.auth.getSession();
+    if (!session?.access_token) return;
+    const res = await fetch(`${API}/user/profile`, {
+      headers: { 'Authorization': `Bearer ${session.access_token}` }
+    });
+    if (!res.ok) return;
+    state.userProfile = await res.json();
+    if (tierBadge) {
+      const isPremium = state.userProfile.tier === 'premium';
+      tierBadge.textContent  = isPremium ? '★ Premium' : `Free ${state.userProfile.generations_used}/${state.userProfile.limit}`;
+      tierBadge.className    = 'nav-tier-badge' + (isPremium ? ' nav-tier-premium' : '');
+      tierBadge.style.display = 'inline-flex';
+    }
+  } catch (_) {}
+}
+
+function showUpgradeModal(used, limit) {
+  document.getElementById('upgrade-used').textContent  = used;
+  document.getElementById('upgrade-limit').textContent = limit;
+  document.getElementById('upgrade-modal').style.display = 'flex';
+}
+
+function closeUpgradeModal() {
+  document.getElementById('upgrade-modal').style.display = 'none';
 }
 
 async function handleSignOut() {
