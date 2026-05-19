@@ -281,15 +281,34 @@ def verify_token(authorization: Optional[str] = Header(None)) -> Optional[str]:
     try:
         token = authorization.replace("Bearer ", "")
         user = supabase.auth.get_user(token)
-        return user.user.id if user and user.user else None
+        if user and user.user:
+            _ensure_admin_premium(user.user.id, user.user.email or "")
+            return user.user.id
+        return None
     except Exception as e:
         logger.warning("Token verification failed: %s", e)
         return None
 
 # ─────────────────────────── Tier System ──────────────────────
 
-FREE_TIER_LIMIT   = 5
-ADMIN_SECRET_KEY  = os.environ.get("ADMIN_SECRET_KEY", "")
+FREE_TIER_LIMIT  = 5
+ADMIN_SECRET_KEY = os.environ.get("ADMIN_SECRET_KEY", "")
+ADMIN_EMAIL      = os.environ.get("ADMIN_EMAIL", "sharanrajithk@gmail.com")
+
+def _ensure_admin_premium(user_id: str, email: str):
+    """If this user is the admin, silently upgrade their profile to premium."""
+    if email.lower() != ADMIN_EMAIL.lower():
+        return
+    try:
+        res = supabase.table("profiles").select("tier").eq("id", user_id).execute()
+        if res.data and res.data[0]["tier"] == "premium":
+            return  # already premium, nothing to do
+        supabase.table("profiles").upsert({
+            "id": user_id, "tier": "premium", "generations_used": 0
+        }).execute()
+        logger.info("Auto-granted premium to admin account %s", email)
+    except Exception as e:
+        logger.warning("Failed to auto-grant admin premium: %s", e)
 
 def _get_or_create_profile(user_id: str) -> dict:
     res = supabase.table("profiles").select("*").eq("id", user_id).execute()

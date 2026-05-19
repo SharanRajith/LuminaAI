@@ -16,3 +16,5 @@ services:
         value: https://luminaai25.netlify.app
       - key: ADMIN_SECRET_KEY
         sync: false
+      - key: ADMIN_EMAIL
+        value: sharanrajithk@gmail.com
