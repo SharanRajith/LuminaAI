@@ -512,7 +512,8 @@ async def export_pptx(req: ExportRequest):
         async def fetch_image(title: str):
             """Fetch a Pollinations AI image in a thread so the event loop isn't blocked."""
             encoded_prompt = urllib.parse.quote(
-                f"high quality presentation slide image about {title}, professional, cinematic lighting"
+                f"wide angle landscape scene, {title}, professional stock photography, "
+                f"cinematic lighting, high resolution, vivid colors, no text, no watermark, no people closeup"
             )
             url = f"https://image.pollinations.ai/prompt/{encoded_prompt}?width=1280&height=720&nologo=true"
 

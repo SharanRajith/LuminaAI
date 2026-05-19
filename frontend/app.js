@@ -286,7 +286,7 @@ function loadSlideImages(slides, startIdx = 0) {
     // Step 2 — Pollinations AI swap (staggered 300 ms apart, 1024×576 for speed)
     setTimeout(() => {
       const aiPrompt = encodeURIComponent(
-        `${topic}, professional photography, cinematic lighting, sharp focus, 4k, no text`
+        `wide angle landscape scene, ${topic}, professional stock photography, cinematic lighting, vivid colors, high resolution, no text, no watermark, no portrait`
       );
       const aiSeed = (idx + startIdx) * 37 + 1;
       const aiUrl  = `https://image.pollinations.ai/prompt/${aiPrompt}?width=1024&height=576&nologo=true&seed=${aiSeed}`;
@@ -577,7 +577,7 @@ function swapSlideImage(idx) {
   const slide   = state.presData?.slides?.[idx];
   const topic   = slide?.title || slide?.quote || '';
   const newSeed = Math.floor(Math.random() * 9999);
-  const encoded = encodeURIComponent(`${topic}, professional photography, cinematic lighting, 4k`);
+  const encoded = encodeURIComponent(`wide angle landscape scene, ${topic}, professional stock photography, cinematic lighting, vivid colors, no text, no watermark, no portrait`);
   imgEl.classList.remove('loaded');
   imgEl.src = `https://image.pollinations.ai/prompt/${encoded}?width=1280&height=720&nologo=true&seed=${newSeed}`;
   imgEl.onload  = () => imgEl.classList.add('loaded');
