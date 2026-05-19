@@ -376,6 +376,10 @@ select option{background:var(--bg2)}
 .slide-ctrl-btn--danger:hover{background:rgba(255,60,80,.5)!important;border-color:rgba(255,60,80,.6)!important}
 .tb-btn-del:hover{color:#ff6584;border-color:rgba(255,101,132,.4)}
 
+/* ── Made with Lumina AI watermark ── */
+.slide-watermark{position:absolute;bottom:10px;right:14px;display:flex;align-items:center;gap:5px;font-size:.65rem;font-weight:600;color:rgba(255,255,255,0.45);letter-spacing:.02em;pointer-events:none;z-index:10;text-shadow:0 1px 3px rgba(0,0,0,.5)}
+.slide-watermark svg{flex-shrink:0;border-radius:3px}
+
 /* ── Slide loading state (during regeneration) ── */
 .slide-loading::after{content:'Regenerating…';position:absolute;inset:0;display:flex;align-items:center;justify-content:center;background:rgba(0,0,0,.7);color:#fff;font-size:1.1rem;font-weight:600;z-index:30;backdrop-filter:blur(4px)}
 

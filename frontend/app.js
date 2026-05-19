@@ -378,17 +378,31 @@ function buildSlideHTML(sd, idx) {
       ${sd.caption && !items.length ? `<div class="slide-caption" data-field="caption">${esc(sd.caption)}</div>` : ''}`;
   }
 
+  const watermark = `<div class="slide-watermark" aria-hidden="true">
+    <svg width="14" height="14" viewBox="0 0 36 36" fill="none" xmlns="http://www.w3.org/2000/svg">
+      <defs>
+        <linearGradient id="wm-g" x1="0" y1="0" x2="36" y2="36" gradientUnits="userSpaceOnUse">
+          <stop offset="0%" stop-color="#6c63ff"/>
+          <stop offset="100%" stop-color="#ff6584"/>
+        </linearGradient>
+      </defs>
+      <rect width="36" height="36" rx="9" fill="url(#wm-g)"/>
+      <path d="M18 6.5 L20.2 15.8 L29.5 18 L20.2 20.2 L18 29.5 L15.8 20.2 L6.5 18 L15.8 15.8 Z" fill="white"/>
+    </svg>
+    Made with Lumina AI
+  </div>`;
+
   // ── Assemble by image_position ──
   if (pos === 'none') {
-    return `${controls}<div class="slide-text-col slide-text-col--full">${inner}</div>`;
+    return `${controls}<div class="slide-text-col slide-text-col--full">${inner}</div>${watermark}`;
   }
   if (pos === 'full') {
-    return `${controls}${imgFull}<div class="slide-center-content">${inner}</div>`;
+    return `${controls}${imgFull}<div class="slide-center-content">${inner}</div>${watermark}`;
   }
   const textCol = `<div class="slide-text-col">${inner}</div>`;
   return pos === 'left'
-    ? `${controls}${imgPanel('left')}${textCol}`
-    : `${controls}${textCol}${imgPanel('right')}`;
+    ? `${controls}${imgPanel('left')}${textCol}${watermark}`
+    : `${controls}${textCol}${imgPanel('right')}${watermark}`;
 }
 
 function esc(str) {

@@ -545,6 +545,8 @@ async def export_pptx(req: ExportRequest):
 
             add_text(slide, f"{idx+1} / {total}", Inches(0.4), Inches(7.1), Inches(1.4), Inches(0.3),
                      10, color=TXT2, align=PP_ALIGN.LEFT)
+            add_text(slide, "Made with Lumina AI", Inches(9.5), Inches(7.1), Inches(3.5), Inches(0.3),
+                     9, color=TXT2, align=PP_ALIGN.RIGHT)
 
             if stype == "title":
                 if img_data:
@@ -690,6 +692,7 @@ def build_latex_source(data: dict) -> str:
         rf"\fancyhead[L]{{\textbf{{{title}}}}}",
         rf"\fancyhead[R]{{{date}}}",
         r"\fancyfoot[C]{\thepage}",
+        r"\fancyfoot[R]{\small\textcolor{accent}{Made with Lumina AI}}",
         r"\begin{document}",
         r"\begin{titlepage}\centering",
         r"\vspace*{3cm}",
@@ -755,12 +758,21 @@ def build_docx(data: dict) -> io.BytesIO:
 
     doc = Document()
 
-    # Page margins
+    # Page margins + footer
     for section in doc.sections:
         section.top_margin    = Inches(1)
         section.bottom_margin = Inches(1)
         section.left_margin   = Inches(1.2)
         section.right_margin  = Inches(1.2)
+        from docx.oxml.ns import qn
+        from docx.oxml import OxmlElement
+        footer_para = section.footer.paragraphs[0]
+        footer_para.clear()
+        footer_para.alignment = WD_ALIGN_PARAGRAPH.RIGHT
+        fr = footer_para.add_run("Made with Lumina AI")
+        fr.font.size = Pt(8)
+        fr.font.color.rgb = ACCENT
+        fr.font.bold = True
 
     # Title page
     tp = doc.add_paragraph()
