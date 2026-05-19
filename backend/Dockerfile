@@ -6,6 +6,7 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
     texlive-latex-base \
     texlive-latex-recommended \
     texlive-fonts-recommended \
+    lmodern \
     && rm -rf /var/lib/apt/lists/*
 
 WORKDIR /app
