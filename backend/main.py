@@ -384,34 +384,78 @@ def verify_admin(authorization: Optional[str] = Header(None)) -> str:
     raise HTTPException(status_code=403, detail="Unauthorized")
 
 
+_IMAGE_EXTS    = {".jpg", ".jpeg", ".png", ".webp", ".gif"}
+_IMAGE_MIMES   = {".jpg": "image/jpeg", ".jpeg": "image/jpeg",
+                  ".png": "image/png",  ".webp": "image/webp", ".gif": "image/gif"}
+_DOC_EXTS      = {".pdf", ".docx", ".txt"}
+
 @app.post("/upload/document")
 async def upload_document(file: UploadFile = File(...), _user_id: Optional[str] = Depends(verify_token)):
     filename = (file.filename or "").lower()
-    if not any(filename.endswith(ext) for ext in (".pdf", ".docx", ".txt")):
-        raise HTTPException(status_code=400, detail="Unsupported file type. Upload PDF, DOCX, or TXT.")
+    ext = next((e for e in _IMAGE_EXTS | _DOC_EXTS if filename.endswith(e)), None)
+    if not ext:
+        raise HTTPException(status_code=400,
+            detail="Unsupported file type. Upload PDF, DOCX, TXT, JPG, PNG, or WEBP.")
     content = await file.read()
-    if len(content) > 10 * 1024 * 1024:
-        raise HTTPException(status_code=413, detail="File too large (max 10 MB).")
+    if len(content) > 15 * 1024 * 1024:
+        raise HTTPException(status_code=413, detail="File too large (max 15 MB).")
     text = ""
     try:
-        if filename.endswith(".pdf"):
-            import pdfplumber, io as _io
-            with pdfplumber.open(_io.BytesIO(content)) as pdf:
+        if ext in _IMAGE_EXTS:
+            # Use Groq Vision to describe the image
+            api_key = os.environ.get("GROQ_API_KEY", "")
+            if not api_key:
+                raise HTTPException(status_code=500, detail="GROQ_API_KEY not set.")
+            import base64
+            mime      = _IMAGE_MIMES.get(ext, "image/jpeg")
+            b64_image = base64.b64encode(content).decode("utf-8")
+            vision_res = requests.post(
+                "https://api.groq.com/openai/v1/chat/completions",
+                headers={"Authorization": f"Bearer {api_key}", "Content-Type": "application/json"},
+                json={
+                    "model": "llama-3.2-11b-vision-preview",
+                    "messages": [{
+                        "role": "user",
+                        "content": [
+                            {"type": "image_url",
+                             "image_url": {"url": f"data:{mime};base64,{b64_image}"}},
+                            {"type": "text",
+                             "text": (
+                                "Analyze this image thoroughly. Extract all visible text, numbers, "
+                                "data, charts, and key information. Describe what you see in detail — "
+                                "including subjects, context, any labels or captions. "
+                                "This description will be used to create a presentation or report."
+                             )}
+                        ]
+                    }],
+                    "max_tokens": 1500,
+                },
+                timeout=30,
+            )
+            if vision_res.status_code != 200:
+                raise HTTPException(status_code=422,
+                    detail=f"Image analysis failed: {vision_res.text[:200]}")
+            text = vision_res.json()["choices"][0]["message"]["content"].strip()
+        elif ext == ".pdf":
+            import pdfplumber
+            with pdfplumber.open(io.BytesIO(content)) as pdf:
                 for page in pdf.pages:
                     text += (page.extract_text() or "") + "\n"
-        elif filename.endswith(".docx"):
+        elif ext == ".docx":
             from docx import Document as DocxDoc
-            import io as _io
-            doc = DocxDoc(_io.BytesIO(content))
+            doc = DocxDoc(io.BytesIO(content))
             text = "\n".join(p.text for p in doc.paragraphs if p.text.strip())
         else:
             text = content.decode("utf-8", errors="ignore")
+    except HTTPException:
+        raise
     except Exception as e:
         raise HTTPException(status_code=422, detail=f"Could not parse file: {e}")
     text = text.strip()[:10000]
     if not text:
-        raise HTTPException(status_code=422, detail="No text could be extracted from this file.")
-    return {"text": text, "filename": file.filename, "chars": len(text)}
+        raise HTTPException(status_code=422, detail="No content could be extracted from this file.")
+    is_image = ext in _IMAGE_EXTS
+    return {"text": text, "filename": file.filename, "chars": len(text), "is_image": is_image}
 
 
 @app.get("/admin/stats")
@@ -1107,32 +1151,6 @@ async def export_report_pdf(req: ExportRequest):
         logger.exception("LaTeX PDF compilation failed")
         raise HTTPException(status_code=500, detail=str(e))
 
-
-@app.post("/upload/document")
-@limiter.limit("10/minute")
-async def upload_document(request: Request, file: UploadFile = File(...)):
-    """Extract text from PDF / DOCX / TXT for use as a generation prompt."""
-    try:
-        content = await file.read()
-        text = ""
-        name = (file.filename or "").lower()
-
-        if name.endswith(".pdf"):
-            import pdfplumber
-            with pdfplumber.open(io.BytesIO(content)) as pdf:
-                for page in pdf.pages:
-                    text += (page.extract_text() or "") + "\n"
-        elif name.endswith(".docx"):
-            from docx import Document
-            doc = Document(io.BytesIO(content))
-            text = "\n".join(p.text for p in doc.paragraphs)
-        else:
-            text = content.decode("utf-8", errors="ignore")
-
-        return {"text": smart_truncate(text), "filename": file.filename}
-    except Exception as e:
-        logger.exception("Document upload failed for file: %s", file.filename)
-        raise HTTPException(status_code=500, detail=str(e))
 
 
 from fastapi.staticfiles import StaticFiles

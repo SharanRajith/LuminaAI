@@ -147,6 +147,17 @@ select option{background:var(--bg2)}
 .upload-remove:hover{color:#ff6584}
 @keyframes spin{to{transform:rotate(360deg)}}
 .upload-spinner{display:inline-block;width:10px;height:10px;border:2px solid rgba(108,99,255,.3);border-top-color:#6c63ff;border-radius:50%;animation:spin .7s linear infinite}
+.upload-preview-wrap{margin-top:8px}
+.upload-img-preview{max-width:180px;max-height:120px;border-radius:10px;border:1px solid rgba(108,99,255,.3);object-fit:cover;display:block}
+
+/* ── Usage Counter ── */
+.usage-counter{display:flex;flex-direction:column;gap:6px;background:rgba(255,255,255,.04);border:1px solid rgba(255,255,255,.08);border-radius:12px;padding:12px 14px;margin-bottom:12px}
+.usage-bar-wrap{height:5px;background:rgba(255,255,255,.08);border-radius:4px;overflow:hidden}
+.usage-bar{height:100%;border-radius:4px;transition:width .4s ease}
+.usage-text{display:flex;flex-direction:column;gap:2px;font-size:.8rem}
+.usage-sub{color:rgba(255,255,255,.35);font-size:.75rem}
+.usage-upgrade-btn{background:none;border:none;color:#a78bfa;cursor:pointer;font-size:.75rem;padding:0;text-decoration:underline}
+.usage-upgrade-btn:hover{color:#fff}
 .form-row{display:grid;grid-template-columns:1fr 1fr;gap:12px}
 .theme-picker{display:flex;gap:8px;flex-wrap:wrap}
 .theme-opt{display:flex;flex-direction:column;align-items:center;gap:6px;cursor:pointer;padding:8px;border-radius:10px;border:2px solid transparent;transition:.2s}

@@ -86,12 +86,17 @@ function validatePrompt(topic) {
   return null;
 }
 
-/* ── Document Upload ── */
+/* ── Document / Image Upload ── */
 async function handleUpload(input) {
   const file = input.files[0];
   if (!file) return;
-  const statusEl = document.getElementById('upload-status');
-  statusEl.innerHTML = '<span class="upload-spinner"></span> Reading file…';
+  const statusEl  = document.getElementById('upload-status');
+  const previewEl = document.getElementById('upload-preview');
+  const isImage   = file.type.startsWith('image/');
+
+  statusEl.innerHTML = `<span class="upload-spinner"></span> ${isImage ? 'Analysing image with AI…' : 'Reading file…'}`;
+  if (previewEl) previewEl.innerHTML = '';
+
   const form = new FormData();
   form.append('file', file);
   try {
@@ -99,26 +104,48 @@ async function handleUpload(input) {
     const data = await res.json();
     if (!res.ok) throw new Error(data.detail || 'Upload failed');
     state.uploadedContext = data.text;
-    const kb = Math.round(data.chars / 100) / 10;
-    statusEl.innerHTML = `
-      <span class="upload-badge">
-        <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="20 6 9 17 4 12"/></svg>
-        ${file.name} · ${kb}k chars
-        <button class="upload-remove" onclick="clearUpload()" title="Remove file">×</button>
-      </span>`;
+
+    if (isImage) {
+      // Show image thumbnail
+      const objUrl = URL.createObjectURL(file);
+      if (previewEl) {
+        previewEl.innerHTML = `<img src="${objUrl}" class="upload-img-preview" alt="Uploaded image" onload="URL.revokeObjectURL(this.src)">`;
+      }
+      statusEl.innerHTML = `
+        <span class="upload-badge">
+          <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="20 6 9 17 4 12"/></svg>
+          ${file.name} · AI analysed
+          <button class="upload-remove" onclick="clearUpload()" title="Remove">×</button>
+        </span>`;
+    } else {
+      if (previewEl) previewEl.innerHTML = '';
+      const kb = Math.round(data.chars / 100) / 10;
+      statusEl.innerHTML = `
+        <span class="upload-badge">
+          <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="20 6 9 17 4 12"/></svg>
+          ${file.name} · ${kb}k chars
+          <button class="upload-remove" onclick="clearUpload()" title="Remove">×</button>
+        </span>`;
+    }
     const topicEl = document.getElementById('topic');
-    if (!topicEl.value.trim()) topicEl.value = 'Create content based on the uploaded document.';
+    if (!topicEl.value.trim()) {
+      topicEl.value = isImage
+        ? 'Create content based on the uploaded image.'
+        : 'Create content based on the uploaded document.';
+    }
     updateCharCount(topicEl);
   } catch(e) {
     state.uploadedContext = null;
+    if (previewEl) previewEl.innerHTML = '';
     statusEl.textContent = '✗ ' + e.message;
   }
 }
 
 function clearUpload() {
   state.uploadedContext = null;
-  const statusEl = document.getElementById('upload-status');
-  statusEl.textContent = '';
+  document.getElementById('upload-status').textContent = '';
+  const previewEl = document.getElementById('upload-preview');
+  if (previewEl) previewEl.innerHTML = '';
   const input = document.getElementById('doc-upload');
   if (input) input.value = '';
 }
@@ -210,6 +237,7 @@ async function generate() {
       const data = await res.json();
       finishLoading();
       setTimeout(() => { renderPresentation(data); showScreen('presentation'); }, 600);
+      fetchUserProfile();
     } catch (e) {
       finishLoading();
       showScreen('create');
@@ -244,6 +272,7 @@ async function generate() {
       const data = await res.json();
       finishLoading();
       setTimeout(() => { renderReport(data); showScreen('report'); }, 600);
+      fetchUserProfile();
     } catch (e) {
       finishLoading();
       showScreen('create');
@@ -1134,7 +1163,29 @@ async function fetchUserProfile() {
     if (isPremium && prevTier !== 'premium') {
       setTimeout(() => showPremiumCongrats(), 400);
     }
+    renderUsageCounter();
   } catch (_) {}
+}
+
+function renderUsageCounter() {
+  const el = document.getElementById('usage-counter');
+  if (!el) return;
+  const p = state.userProfile;
+  if (!p || p.tier === 'premium') { el.style.display = 'none'; return; }
+  const used      = p.generations_used ?? 0;
+  const limit     = p.limit ?? 5;
+  const remaining = Math.max(0, limit - used);
+  const pct       = Math.min(100, (used / limit) * 100);
+  const color     = remaining <= 1 ? '#ff6584' : remaining <= 2 ? '#ffc700' : '#6c63ff';
+  el.style.display = 'flex';
+  el.innerHTML = `
+    <div class="usage-bar-wrap">
+      <div class="usage-bar" style="width:${pct}%;background:${color}"></div>
+    </div>
+    <div class="usage-text">
+      <span style="color:${color};font-weight:700;">${remaining} generation${remaining !== 1 ? 's' : ''} remaining</span>
+      <span class="usage-sub">${used} / ${limit} used · <button class="usage-upgrade-btn" onclick="showUpgradeModal(${used},${limit})">Upgrade to Premium</button></span>
+    </div>`;
 }
 
 function showPremiumCongrats() {
