@@ -1151,7 +1151,6 @@ async function fetchUserProfile() {
       headers: { 'Authorization': `Bearer ${session.access_token}` }
     });
     if (!res.ok) return;
-    const prevTier    = state.userProfile?.tier ?? null;
     state.userProfile = await res.json();
     const isPremium   = state.userProfile.tier === 'premium';
     if (tierBadge) {
@@ -1159,9 +1158,13 @@ async function fetchUserProfile() {
       tierBadge.className     = 'nav-tier-badge' + (isPremium ? ' nav-tier-premium' : '');
       tierBadge.style.display = 'inline-flex';
     }
-    // Show congratulations if this session just gained premium
-    if (isPremium && prevTier !== 'premium') {
-      setTimeout(() => showPremiumCongrats(), 400);
+    // Show congratulations only once, the first time this user sees premium
+    if (isPremium) {
+      const seenKey = `lumina_premium_seen_${session.user.id}`;
+      if (!localStorage.getItem(seenKey)) {
+        localStorage.setItem(seenKey, '1');
+        setTimeout(() => showPremiumCongrats(), 400);
+      }
     }
     renderUsageCounter();
   } catch (_) {}

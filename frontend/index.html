@@ -135,6 +135,8 @@
 
   <!-- ═══════════════════ HOME ═══════════════════ -->
   <div id="screen-home" class="screen active">
+
+    <!-- ── Hero ── -->
     <section class="hero" aria-label="Hero">
       <div class="hero-bg" aria-hidden="true">
         <div class="orb orb-a"></div>
@@ -145,33 +147,33 @@
       <div class="hero-left">
         <div class="hero-badge">
           <span class="badge-pulse" aria-hidden="true"></span>
-          Powered by AI
+          Powered by AI · Free to start
         </div>
         <h1 class="hero-title">
-          Create <em>Stunning</em><br />AI Presentations<br />
+          Create <em>Stunning</em><br>AI Presentations<br>
           <span class="hero-title-2">&amp; Reports</span>
         </h1>
         <p class="hero-sub">
-          Transform any topic or document into a polished presentation or
-          professional report in seconds. Impress your audience every time.
+          Transform any topic, document, or image into a polished presentation or
+          professional report in seconds — in 10 languages.
         </p>
         <div class="hero-actions">
           <button class="btn-cta" onclick="navigateToCreate()">
-            Start Creating
-            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" aria-hidden="true">
-              <path d="M5 12h14M12 5l7 7-7 7" />
-            </svg>
+            Start Creating Free
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" aria-hidden="true"><path d="M5 12h14M12 5l7 7-7 7"/></svg>
           </button>
-          <button class="btn-ghost-cta"
-            onclick="document.getElementById('features').scrollIntoView({behavior:'smooth'})">
-            See Features
+          <button class="btn-ghost-cta" onclick="document.getElementById('how-it-works').scrollIntoView({behavior:'smooth'})">
+            See How It Works
           </button>
         </div>
-        <div class="hero-pills" aria-label="Key features">
-          <div class="pill">⚡ 10× Faster</div>
-          <div class="pill">🎨 5 Themes</div>
-          <div class="pill">📥 PPTX Export</div>
-          <div class="pill">📄 Report Mode</div>
+        <div class="hero-stats" aria-label="Key stats">
+          <div class="hstat"><span class="hstat-val">10</span><span class="hstat-lbl">Languages</span></div>
+          <div class="hstat-div"></div>
+          <div class="hstat"><span class="hstat-val">5</span><span class="hstat-lbl">Themes</span></div>
+          <div class="hstat-div"></div>
+          <div class="hstat"><span class="hstat-val">3</span><span class="hstat-lbl">Export Formats</span></div>
+          <div class="hstat-div"></div>
+          <div class="hstat"><span class="hstat-val">Free</span><span class="hstat-lbl">To Start</span></div>
         </div>
       </div>
       <div class="hero-right" aria-hidden="true">
@@ -180,109 +182,189 @@
           <div class="deck-card deck-2"></div>
           <div class="deck-card deck-1">
             <div class="dp-label">SLIDE 1 OF 10</div>
-            <div class="dp-title">AI-Generated<br />Presentations</div>
+            <div class="dp-title">AI-Generated<br>Presentations</div>
             <div class="dp-bar"></div>
-            <div class="dp-dots">
-              <span></span><span></span><span></span>
-            </div>
+            <div class="dp-dots"><span></span><span></span><span></span></div>
           </div>
         </div>
       </div>
     </section>
 
-    <!-- Features -->
+    <!-- ── How It Works ── -->
+    <section class="how-section" id="how-it-works" aria-labelledby="how-heading">
+      <div class="section-label">HOW IT WORKS</div>
+      <h2 class="section-title" id="how-heading">Three steps to done</h2>
+      <p class="section-sub">No design skills needed. No templates to fill. Just describe and go.</p>
+      <div class="how-steps">
+        <div class="how-step">
+          <div class="how-num">1</div>
+          <div class="how-icon" style="--c:#6c63ff">
+            <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M11 4H4a2 2 0 00-2 2v14a2 2 0 002 2h14a2 2 0 002-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 013 3L12 15l-4 1 1-4 9.5-9.5z"/></svg>
+          </div>
+          <h3>Describe your topic</h3>
+          <p>Type a topic, paste text, or upload a PDF, Word doc, or image. Add language and tone preferences.</p>
+        </div>
+        <div class="how-arrow" aria-hidden="true">
+          <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M5 12h14M12 5l7 7-7 7"/></svg>
+        </div>
+        <div class="how-step">
+          <div class="how-num">2</div>
+          <div class="how-icon" style="--c:#ff6584">
+            <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><path d="M12 8v4l3 3"/></svg>
+          </div>
+          <h3>AI generates in seconds</h3>
+          <p>Our AI writes substantive content, picks layouts, and creates contextual images — fully automatically.</p>
+        </div>
+        <div class="how-arrow" aria-hidden="true">
+          <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M5 12h14M12 5l7 7-7 7"/></svg>
+        </div>
+        <div class="how-step">
+          <div class="how-num">3</div>
+          <div class="how-icon" style="--c:#43e6fc">
+            <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
+          </div>
+          <h3>Download &amp; present</h3>
+          <p>Export as PPTX, PDF, or Word. Edit slides, reorder, add notes — or present directly in the browser.</p>
+        </div>
+      </div>
+    </section>
+
+    <!-- ── Features ── -->
     <section class="features-section" id="features" aria-labelledby="features-heading">
       <div class="section-label">FEATURES</div>
-      <h2 class="section-title" id="features-heading">Everything You Need</h2>
-      <p class="section-sub">From blank canvas to polished output in one click</p>
+      <h2 class="section-title" id="features-heading">Everything packed in</h2>
+      <p class="section-sub">One tool. All the features you actually need.</p>
       <div class="features-grid">
         <div class="feat-card">
           <div class="feat-icon" style="--c:#6c63ff" aria-hidden="true">
-            <svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-              <rect x="2" y="3" width="20" height="14" rx="2" />
-              <path d="M8 21h8M12 17v4" />
-            </svg>
+            <svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="2" y="3" width="20" height="14" rx="2"/><path d="M8 21h8M12 17v4"/></svg>
           </div>
-          <h3>Slide Presentations</h3>
-          <p>Generate full slide decks with title, content, quote, stats, and agenda slides. Present in full-screen mode
-            with speaker notes.</p>
+          <h3>AI Presentations</h3>
+          <p>Data-rich slide decks with stats, content, and agenda slides. Substantive bullet points, not filler. Contextual images on every slide.</p>
         </div>
         <div class="feat-card">
           <div class="feat-icon" style="--c:#ff6584" aria-hidden="true">
-            <svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-              <path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z" />
-              <polyline points="14 2 14 8 20 8" />
-              <line x1="16" y1="13" x2="8" y2="13" />
-              <line x1="16" y1="17" x2="8" y2="17" />
-            </svg>
+            <svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/></svg>
           </div>
           <h3>Professional Reports</h3>
-          <p>Structured reports with executive summary, sections, key highlights, and actionable recommendations. Export
-            via browser print.</p>
+          <p>McKinsey-style reports with executive summary, key highlights, sections, conclusion, and recommendations.</p>
         </div>
         <div class="feat-card">
           <div class="feat-icon" style="--c:#43e6fc" aria-hidden="true">
-            <svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-              <circle cx="12" cy="12" r="10" />
-              <path d="M12 8v4l3 3" />
-            </svg>
+            <svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="18" height="18" rx="2"/><circle cx="8.5" cy="8.5" r="1.5"/><polyline points="21 15 16 10 5 21"/></svg>
           </div>
-          <h3>Instant Generation</h3>
-          <p>AI crafts complete, substantive content in seconds. No templates, no placeholders — real insights tailored
-            to your topic.</p>
+          <h3>Image &amp; Document Upload</h3>
+          <p>Upload a PDF, DOCX, TXT, or image. AI reads and understands your file using vision analysis, then builds your content from it.</p>
         </div>
         <div class="feat-card">
           <div class="feat-icon" style="--c:#f9c846" aria-hidden="true">
-            <svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-              <path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4" />
-              <polyline points="7 10 12 15 17 10" />
-              <line x1="12" y1="15" x2="12" y2="3" />
-            </svg>
+            <svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
           </div>
-          <h3>PPTX Export</h3>
-          <p>Download your presentation as a native PowerPoint file, ready to edit, share, or present anywhere.
-            Dark-themed slides included.</p>
+          <h3>3 Export Formats</h3>
+          <p>Download as native PowerPoint (.pptx), PDF, or Word (.docx). Ready to share, edit, or present anywhere.</p>
         </div>
         <div class="feat-card">
           <div class="feat-icon" style="--c:#ff9f43" aria-hidden="true">
-            <svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-              <path d="M4 15s1-1 4-1 5 2 8 2 4-1 4-1V3s-1 1-4 1-5-2-8-2-4 1-4 1z" />
-              <line x1="4" y1="22" x2="4" y2="15" />
-            </svg>
+            <svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><line x1="2" y1="12" x2="22" y2="12"/><path d="M12 2a15.3 15.3 0 014 10 15.3 15.3 0 01-4 10 15.3 15.3 0 01-4-10 15.3 15.3 0 014-10z"/></svg>
           </div>
-          <h3>5 Beautiful Themes</h3>
-          <p>Choose from Dark Pro, Ocean, Sunset, Emerald, and Corporate themes. Each with curated color palettes and
-            typography.</p>
+          <h3>10 Languages</h3>
+          <p>Generate in English, Hindi, Spanish, French, German, Arabic, Portuguese, Chinese, Japanese, and Korean.</p>
         </div>
         <div class="feat-card">
           <div class="feat-icon" style="--c:#a29bfe" aria-hidden="true">
-            <svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-              <path
-                d="M21 16V8a2 2 0 00-1-1.73l-7-4a2 2 0 00-2 0l-7 4A2 2 0 003 8v8a2 2 0 001 1.73l7 4a2 2 0 002 0l7-4A2 2 0 0021 16z" />
-            </svg>
+            <svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 15s1-1 4-1 5 2 8 2 4-1 4-1V3s-1 1-4 1-5-2-8-2-4 1-4 1z"/><line x1="4" y1="22" x2="4" y2="15"/></svg>
           </div>
-          <h3>Document Upload</h3>
-          <p>Upload a PDF, DOCX, or TXT file and let the AI extract and transform your existing content into slides or a
-            report.</p>
+          <h3>5 Beautiful Themes</h3>
+          <p>Dark Pro, Ocean, Sunset, Emerald, and Corporate — each with curated colors, gradients, and typography.</p>
+        </div>
+        <div class="feat-card">
+          <div class="feat-icon" style="--c:#55efc4" aria-hidden="true">
+            <svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="9 11 12 14 22 4"/><path d="M21 12v7a2 2 0 01-2 2H5a2 2 0 01-2-2V5a2 2 0 012-2h11"/></svg>
+          </div>
+          <h3>Smart Slide Editor</h3>
+          <p>Drag to reorder, add or delete slides, undo changes, presentation timer, and slide transitions — all in the browser.</p>
+        </div>
+        <div class="feat-card">
+          <div class="feat-icon" style="--c:#fd79a8" aria-hidden="true">
+            <svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/></svg>
+          </div>
+          <h3>AI-Generated Images</h3>
+          <p>Every slide gets a contextual AI image matched to its title and content. Refresh any image with one click.</p>
         </div>
       </div>
     </section>
 
-    <!-- CTA Banner -->
+    <!-- ── Pricing ── -->
+    <section class="pricing-section" id="pricing" aria-labelledby="pricing-heading">
+      <div class="section-label">PRICING</div>
+      <h2 class="section-title" id="pricing-heading">Start free, upgrade anytime</h2>
+      <p class="section-sub">No credit card required to get started.</p>
+      <div class="pricing-grid">
+        <div class="pricing-card">
+          <div class="pricing-name">Free</div>
+          <div class="pricing-price">₹0</div>
+          <div class="pricing-per">forever</div>
+          <ul class="pricing-list">
+            <li><span class="pcheck">✓</span> 5 generations (PPT + reports)</li>
+            <li><span class="pcheck">✓</span> All 5 themes</li>
+            <li><span class="pcheck">✓</span> All 10 languages</li>
+            <li><span class="pcheck">✓</span> PPTX, PDF, DOCX export</li>
+            <li><span class="pcheck">✓</span> Document &amp; image upload</li>
+            <li><span class="pcross">✗</span> Unlimited generations</li>
+          </ul>
+          <button class="pricing-btn" onclick="navigateToCreate()">Get Started</button>
+        </div>
+        <div class="pricing-card pricing-card-premium">
+          <div class="pricing-popular">Most Popular</div>
+          <div class="pricing-name">Premium</div>
+          <div class="pricing-price">Contact Us</div>
+          <div class="pricing-per">admin approval</div>
+          <ul class="pricing-list">
+            <li><span class="pcheck">✓</span> Unlimited generations</li>
+            <li><span class="pcheck">✓</span> All 5 themes</li>
+            <li><span class="pcheck">✓</span> All 10 languages</li>
+            <li><span class="pcheck">✓</span> PPTX, PDF, DOCX export</li>
+            <li><span class="pcheck">✓</span> Document &amp; image upload</li>
+            <li><span class="pcheck">✓</span> Priority generation speed</li>
+          </ul>
+          <a class="pricing-btn pricing-btn-premium" href="mailto:sharanrajithk@gmail.com?subject=Lumina%20AI%20Premium%20Access">Request Access</a>
+        </div>
+      </div>
+    </section>
+
+    <!-- ── CTA Banner ── -->
     <section class="cta-banner" aria-label="Call to action">
       <div class="cta-banner-bg" aria-hidden="true"></div>
       <h2>Ready to impress?</h2>
-      <p>Generate your first AI presentation in under 30 seconds.</p>
+      <p>Generate your first AI presentation in under 30 seconds. No credit card required.</p>
       <button class="btn-cta" onclick="navigateToCreate()">
         Get Started Free
-        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" aria-hidden="true">
-          <path d="M5 12h14M12 5l7 7-7 7" />
-        </svg>
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" aria-hidden="true"><path d="M5 12h14M12 5l7 7-7 7"/></svg>
       </button>
     </section>
 
+    <!-- ── Footer ── -->
     <footer class="footer">
-      <p>Lumina AI &copy; 2026</p>
+      <div class="footer-inner">
+        <div class="footer-brand">
+          <svg viewBox="0 0 36 36" width="24" height="24" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
+            <defs>
+              <linearGradient id="ft-g" x1="0" y1="0" x2="36" y2="36" gradientUnits="userSpaceOnUse">
+                <stop offset="0%" stop-color="#6c63ff"/><stop offset="100%" stop-color="#ff6584"/>
+              </linearGradient>
+            </defs>
+            <rect width="36" height="36" rx="9" fill="url(#ft-g)"/>
+            <path d="M18 6.5 L20.2 15.8 L29.5 18 L20.2 20.2 L18 29.5 L15.8 20.2 L6.5 18 L15.8 15.8 Z" fill="white"/>
+          </svg>
+          <span>Lumina AI</span>
+        </div>
+        <div class="footer-links">
+          <a href="mailto:sharanrajithk@gmail.com">Contact</a>
+          <a onclick="document.getElementById('features').scrollIntoView({behavior:'smooth'})" style="cursor:pointer">Features</a>
+          <a onclick="document.getElementById('pricing').scrollIntoView({behavior:'smooth'})" style="cursor:pointer">Pricing</a>
+        </div>
+        <p class="footer-copy">Lumina AI &copy; 2026</p>
+      </div>
     </footer>
   </div><!-- /screen-home -->
 

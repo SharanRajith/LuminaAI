@@ -322,6 +322,14 @@ def _get_or_create_profile(user_id: str) -> dict:
     }).execute()
     return new.data[0]
 
+def _is_premium(user_id: Optional[str]) -> bool:
+    if not supabase or not user_id:
+        return False
+    try:
+        return _get_or_create_profile(user_id).get("tier") == "premium"
+    except Exception:
+        return False
+
 def check_tier_and_increment(user_id: Optional[str]):
     """Raise 403 if free tier limit reached; otherwise increment usage counter."""
     if not supabase or not user_id:
@@ -679,13 +687,14 @@ Make it substantive and engaging."""
 
 
 @app.post("/export/pptx")
-async def export_pptx(req: ExportRequest):
+async def export_pptx(req: ExportRequest, user_id: Optional[str] = Depends(verify_token)):
     try:
         from pptx import Presentation
         from pptx.dml.color import RGBColor
         from pptx.enum.text import PP_ALIGN
         from pptx.util import Inches, Pt
 
+        watermark = not _is_premium(user_id)
         data = req.presentation_data
         theme = data.get("theme", "dark")
 
@@ -775,8 +784,9 @@ async def export_pptx(req: ExportRequest):
 
             add_text(slide, f"{idx+1} / {total}", Inches(0.4), Inches(7.1), Inches(1.4), Inches(0.3),
                      10, color=TXT2, align=PP_ALIGN.LEFT)
-            add_text(slide, "Made with Lumina AI", Inches(9.5), Inches(7.1), Inches(3.5), Inches(0.3),
-                     9, color=TXT2, align=PP_ALIGN.RIGHT)
+            if watermark:
+                add_text(slide, "Made with Lumina AI", Inches(9.5), Inches(7.1), Inches(3.5), Inches(0.3),
+                         9, color=TXT2, align=PP_ALIGN.RIGHT)
 
             if stype == "title":
                 if img_data:
@@ -890,7 +900,7 @@ async def export_pptx(req: ExportRequest):
         raise HTTPException(status_code=500, detail=str(e))
 
 
-def build_latex_source(data: dict) -> str:
+def build_latex_source(data: dict, watermark: bool = True) -> str:
     """Convert report JSON dict into a LaTeX document string."""
     def tex(s: str) -> str:
         for ch, rep in [("&","\\&"),("%","\\%"),("$","\\$"),("#","\\#"),
@@ -922,7 +932,7 @@ def build_latex_source(data: dict) -> str:
         rf"\fancyhead[L]{{\textbf{{{title}}}}}",
         rf"\fancyhead[R]{{{date}}}",
         r"\fancyfoot[C]{\thepage}",
-        r"\fancyfoot[R]{\small\textcolor{accent}{Made with Lumina AI}}",
+        *([ r"\fancyfoot[R]{\small\textcolor{accent}{Made with Lumina AI}}" ] if watermark else []),
         r"\begin{document}",
         r"\begin{titlepage}\centering",
         r"\vspace*{3cm}",
@@ -978,7 +988,7 @@ def build_latex_source(data: dict) -> str:
     return "\n".join(lines)
 
 
-def build_docx(data: dict) -> io.BytesIO:
+def build_docx(data: dict, watermark: bool = True) -> io.BytesIO:
     """Convert report JSON dict into a Word (.docx) document."""
     from docx import Document
     from docx.shared import Pt, RGBColor, Inches
@@ -996,13 +1006,14 @@ def build_docx(data: dict) -> io.BytesIO:
         section.right_margin  = Inches(1.2)
         from docx.oxml.ns import qn
         from docx.oxml import OxmlElement
-        footer_para = section.footer.paragraphs[0]
-        footer_para.clear()
-        footer_para.alignment = WD_ALIGN_PARAGRAPH.RIGHT
-        fr = footer_para.add_run("Made with Lumina AI")
-        fr.font.size = Pt(8)
-        fr.font.color.rgb = ACCENT
-        fr.font.bold = True
+        if watermark:
+            footer_para = section.footer.paragraphs[0]
+            footer_para.clear()
+            footer_para.alignment = WD_ALIGN_PARAGRAPH.RIGHT
+            fr = footer_para.add_run("Made with Lumina AI")
+            fr.font.size = Pt(8)
+            fr.font.color.rgb = ACCENT
+            fr.font.bold = True
 
     # Title page
     tp = doc.add_paragraph()
@@ -1083,10 +1094,10 @@ def build_docx(data: dict) -> io.BytesIO:
 
 
 @app.post("/export/report-docx")
-async def export_report_docx(req: ExportRequest):
+async def export_report_docx(req: ExportRequest, user_id: Optional[str] = Depends(verify_token)):
     """Generate a Word (.docx) document from report JSON."""
     try:
-        buf  = build_docx(req.presentation_data)
+        buf  = build_docx(req.presentation_data, watermark=not _is_premium(user_id))
         name = req.presentation_data.get("title", "report").replace(" ", "_")
         return StreamingResponse(
             buf,
@@ -1099,10 +1110,10 @@ async def export_report_docx(req: ExportRequest):
 
 
 @app.post("/export/report-latex")
-async def export_report_latex(req: ExportRequest):
+async def export_report_latex(req: ExportRequest, user_id: Optional[str] = Depends(verify_token)):
     """Return the raw LaTeX source (.tex) for the report."""
     try:
-        src = build_latex_source(req.presentation_data).encode("utf-8")
+        src = build_latex_source(req.presentation_data, watermark=not _is_premium(user_id)).encode("utf-8")
         name = req.presentation_data.get("title", "report").replace(" ", "_")
         return StreamingResponse(
             io.BytesIO(src),
@@ -1115,10 +1126,10 @@ async def export_report_latex(req: ExportRequest):
 
 
 @app.post("/export/report-pdf")
-async def export_report_pdf(req: ExportRequest):
+async def export_report_pdf(req: ExportRequest, user_id: Optional[str] = Depends(verify_token)):
     """Compile LaTeX → PDF with pdflatex and return the PDF."""
     try:
-        tex_src = build_latex_source(req.presentation_data)
+        tex_src = build_latex_source(req.presentation_data, watermark=not _is_premium(user_id))
         name    = req.presentation_data.get("title", "report").replace(" ", "_")
 
         with tempfile.TemporaryDirectory() as tmpdir:
