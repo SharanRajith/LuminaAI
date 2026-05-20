@@ -1124,14 +1124,22 @@ function updateNavForUser(isLoggedIn) {
   const loginBtn  = document.getElementById('nav-login');
   const tierBadge = document.getElementById('nav-tier-badge');
   const adminBtn  = document.getElementById('nav-admin');
+  // Mobile menu counterparts
+  const mobLib    = document.getElementById('mob-library');
+  const mobAdmin  = document.getElementById('mob-admin');
+  const mobLogin  = document.getElementById('mob-login');
+  const ADMIN_EMAILS = ['sharanrajithk@gmail.com', 'madhurahegde475@gmail.com'];
+  const isAdmin = ADMIN_EMAILS.includes(state.user?.email?.toLowerCase());
   if (isLoggedIn) {
     libBtn.style.display  = 'block';
     loginBtn.textContent  = 'Sign Out';
     loginBtn.onclick      = handleSignOut;
     fetchUserProfile();
-    const ADMIN_EMAILS = ['sharanrajithk@gmail.com', 'madhurahegde475@gmail.com'];
-    const isAdmin = ADMIN_EMAILS.includes(state.user?.email?.toLowerCase());
     if (adminBtn) adminBtn.style.display = isAdmin ? 'block' : 'none';
+    // Mobile
+    if (mobLib)   mobLib.style.display   = 'block';
+    if (mobAdmin) mobAdmin.style.display = isAdmin ? 'block' : 'none';
+    if (mobLogin) { mobLogin.textContent = 'Sign Out'; mobLogin.onclick = () => { closeMobileMenu(); handleSignOut(); }; mobLogin.className = 'mobile-nav-btn mobile-nav-signout'; }
   } else {
     libBtn.style.display  = 'none';
     loginBtn.textContent  = 'Login / Sign Up';
@@ -1139,7 +1147,27 @@ function updateNavForUser(isLoggedIn) {
     state.userProfile     = null;
     if (tierBadge) tierBadge.style.display = 'none';
     if (adminBtn)  adminBtn.style.display  = 'none';
+    // Mobile
+    if (mobLib)   mobLib.style.display   = 'none';
+    if (mobAdmin) mobAdmin.style.display = 'none';
+    if (mobLogin) { mobLogin.textContent = 'Login / Sign Up'; mobLogin.onclick = () => { closeMobileMenu(); showScreen('auth'); }; mobLogin.className = 'mobile-nav-btn'; }
   }
+}
+
+function toggleMobileMenu() {
+  const menu    = document.getElementById('mobile-menu');
+  const overlay = document.getElementById('mobile-menu-overlay');
+  const btn     = document.getElementById('nav-hamburger');
+  const isOpen  = menu.classList.contains('open');
+  menu.classList.toggle('open', !isOpen);
+  overlay.classList.toggle('open', !isOpen);
+  btn.setAttribute('aria-expanded', String(!isOpen));
+}
+
+function closeMobileMenu() {
+  document.getElementById('mobile-menu')?.classList.remove('open');
+  document.getElementById('mobile-menu-overlay')?.classList.remove('open');
+  document.getElementById('nav-hamburger')?.setAttribute('aria-expanded', 'false');
 }
 
 async function fetchUserProfile() {

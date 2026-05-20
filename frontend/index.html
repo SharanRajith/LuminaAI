@@ -83,8 +83,27 @@
         </svg>
         Create
       </button>
+      <button class="nav-hamburger" id="nav-hamburger" onclick="toggleMobileMenu()" aria-label="Open menu" aria-expanded="false">
+        <span></span><span></span><span></span>
+      </button>
     </div>
   </nav>
+
+  <!-- ═══════════════════ MOBILE MENU ═══════════════════ -->
+  <div class="mobile-menu-overlay" id="mobile-menu-overlay" onclick="closeMobileMenu()"></div>
+  <div class="mobile-menu" id="mobile-menu" aria-label="Mobile navigation">
+    <div class="mobile-menu-header">
+      <span class="mobile-menu-brand">Lumina <span>AI</span></span>
+      <button class="mobile-menu-close" onclick="closeMobileMenu()" aria-label="Close menu">&times;</button>
+    </div>
+    <nav class="mobile-menu-links">
+      <button class="mobile-nav-btn" onclick="closeMobileMenu(); showScreen('home')">Home</button>
+      <button class="mobile-nav-btn" id="mob-library" style="display:none" onclick="closeMobileMenu(); showScreen('library'); loadLibrary()">Library</button>
+      <button class="mobile-nav-btn mobile-nav-admin" id="mob-admin" style="display:none" onclick="closeMobileMenu(); showScreen('admin'); loadAdminDashboard()">⚙ Admin</button>
+      <div class="mobile-menu-divider"></div>
+      <button class="mobile-nav-btn" id="mob-login" onclick="closeMobileMenu(); showScreen('auth')">Login / Sign Up</button>
+    </nav>
+  </div>
 
   <!-- ═══════════════════ UPGRADE MODAL ═══════════════════ -->
   <div id="upgrade-modal" style="display:none;position:fixed;inset:0;z-index:9999;background:rgba(0,0,0,.7);backdrop-filter:blur(6px);align-items:center;justify-content:center;" role="dialog" aria-modal="true" aria-labelledby="upgrade-title">
