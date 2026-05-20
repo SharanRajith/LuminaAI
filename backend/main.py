@@ -473,42 +473,44 @@ async def generate_presentation(req: PresentationRequest, request: Request, user
             content_section = f"DOCUMENT CONTENT (base the presentation on this):\n{req.context[:8000]}\n\nUSER INSTRUCTIONS: {req.prompt}"
         else:
             content_section = f"TOPIC: {req.prompt}"
-        prompt = f"""You are an expert presentation designer and content strategist.
-Create a comprehensive, engaging presentation on the topic below.
+        prompt = f"""You are a senior consultant creating an authoritative, information-dense presentation. Think McKinsey-quality slide deck — every slide must deliver real, specific, actionable knowledge.
 
 REQUIREMENTS:
 - Exactly {req.slide_count} slides
 - Audience: {req.audience}
 - Tone: {req.tone}
-{lang_instruction}- Use a variety of slide types for visual interest
+{lang_instruction}
+CONTENT RULES (strictly follow):
+- Each content slide: 3-5 bullets. Every bullet must be 12-25 words with SPECIFIC facts, data, mechanisms, or named examples. No vague one-liners.
+- Include real numbers, percentages, timelines, statistics, or case examples wherever relevant.
+- NO quote slides — every slide must contain original analysis or factual information.
+- Stats slides: use realistic, specific numerical data with descriptive labels and context.
+- Conclusion: concrete, actionable takeaways — not vague summaries.
+- Agenda slide: list the actual section names of the presentation.
+
+IMAGE POSITIONING:
+- "full"  → ONLY for the title slide (full-bleed background image)
+- "right" → most content slides (image panel right, text left)
+- "left"  → use 1-2 times for visual variety
+- "none"  → agenda slide and stats slide (data looks cluttered with image)
 
 {content_section}
 
-Return ONLY valid JSON (no markdown fences) matching this schema exactly.
-CRITICAL: Do NOT use HTML tags (like <h1>) or Markdown inside JSON values. Use plain text only!
-
-Each slide must include an "image_position" field. Choose the best layout for that slide's content:
-- "full"  — AI image fills the entire slide background (best for title, quote, dramatic moments)
-- "right" — image panel on the right, text on the left (good for content-heavy slides)
-- "left"  — image panel on the left, text on the right (vary this for visual rhythm)
-- "none"  — no image, text-only layout (good for dense data or agenda slides)
+Return ONLY valid JSON. No markdown fences. No HTML or Markdown inside string values. Plain text only.
 
 {{
   "title": "...",
   "subtitle": "...",
   "theme": "{req.theme}",
   "slides": [
-    {{ "type": "title",     "title": "...", "subtitle": "...", "image_position": "full", "notes": "..." }},
-    {{ "type": "agenda",    "title": "Agenda", "items": ["...", "..."], "image_position": "none", "notes": "..." }},
-    {{ "type": "content",   "title": "...", "bullets": ["...", "..."], "image_position": "right", "notes": "..." }},
-    {{ "type": "quote",     "quote": "...", "author": "...", "image_position": "full", "notes": "..." }},
-    {{ "type": "stats",     "title": "...", "stats": [{{"value":"...","label":"...","description":"..."}}], "image_position": "full", "notes": "..." }},
-    {{ "type": "content",   "title": "...", "bullets": ["...", "..."], "image_position": "left", "notes": "..." }},
-    {{ "type": "conclusion","title": "Key Takeaways", "bullets": ["...", "..."], "image_position": "right", "notes": "..." }}
+    {{ "type": "title",     "title": "...", "subtitle": "...", "image_position": "full",  "notes": "Speaker intro note..." }},
+    {{ "type": "agenda",    "title": "Agenda", "items": ["Section 1", "Section 2", "Section 3"], "image_position": "none",  "notes": "..." }},
+    {{ "type": "content",   "title": "...", "bullets": ["Specific fact with detail and context, about 15 words here", "Another substantive point with real data or named example"], "image_position": "right", "notes": "..." }},
+    {{ "type": "stats",     "title": "...", "stats": [{{"value":"42%","label":"Adoption Rate","description":"Among Fortune 500 companies in 2024"}},{{"value":"3.2×","label":"ROI","description":"Average return within 18 months"}}], "image_position": "none",  "notes": "..." }},
+    {{ "type": "content",   "title": "...", "bullets": ["...", "..."], "image_position": "left",  "notes": "..." }},
+    {{ "type": "conclusion","title": "Key Takeaways", "bullets": ["Actionable takeaway with specific next step", "..."], "image_position": "right", "notes": "..." }}
   ]
-}}
-
-Make content substantive and insightful. Vary slide types AND image_position throughout for visual rhythm."""
+}}"""
 
         response_text = generate_with_groq(prompt, req.model_name)
         data = extract_json(response_text)
@@ -689,11 +691,15 @@ async def export_pptx(req: ExportRequest):
             add_rect(slide, Inches(0), Inches(0), Inches(13.33), Inches(0.08), ACC)
             add_rect(slide, Inches(0), Inches(7.3), Inches(13.33), Inches(0.2), BG2)
 
-        async def fetch_image(title: str):
+        async def fetch_image(sd: dict):
             """Fetch a Pollinations AI image in a thread so the event loop isn't blocked."""
+            title   = sd.get("title", "")
+            bullets = sd.get("bullets", sd.get("items", []))
+            extra   = (bullets[0] if bullets else "")[:70]
+            desc    = f"{title}, {extra}" if extra else title
             encoded_prompt = urllib.parse.quote(
-                f"wide angle landscape scene, {title}, professional stock photography, "
-                f"cinematic lighting, high resolution, vivid colors, no text, no watermark, no people closeup"
+                f"wide angle landscape scene, {desc}, professional stock photography, "
+                f"cinematic lighting, high resolution, vivid colors, no text, no watermark, no portrait"
             )
             url = f"https://image.pollinations.ai/prompt/{encoded_prompt}?width=1280&height=720&nologo=true"
 
@@ -713,7 +719,7 @@ async def export_pptx(req: ExportRequest):
 
         # Fetch all images concurrently instead of one-by-one
         slide_images = await asyncio.gather(
-            *[fetch_image(sd.get("title", "")) for sd in slides]
+            *[fetch_image(sd) for sd in slides]
         )
 
         for idx, sd in enumerate(slides):

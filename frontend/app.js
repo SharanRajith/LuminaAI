@@ -298,29 +298,34 @@ function renderPresentation(data) {
   resetTimer();
 }
 
+function _slideImgDesc(sd) {
+  const title   = sd.title || sd.quote || 'nature';
+  const bullets = sd.bullets || sd.items || [];
+  const extra   = bullets[0] ? bullets[0].substring(0, 70) : '';
+  return extra ? `${title}, ${extra}` : title;
+}
+
 function loadSlideImages(slides, startIdx = 0) {
   slides.forEach((sd, i) => {
     const idx   = startIdx + i;
-    const topic = sd.title || sd.quote || 'nature';
     const imgEl = document.getElementById(`slide-img-${idx}`);
     if (!imgEl) return;
 
-    // Step 1 — instant topic-relevant placeholder via LoremFlickr (keyword search)
-    const keywords = topic.split(/\s+/).slice(0, 3).join(',');
-    const flickrUrl = `https://loremflickr.com/1280/720/${encodeURIComponent(keywords)}?lock=${idx + startIdx}`;
+    const desc     = _slideImgDesc(sd);
+    const keywords = (sd.title || 'nature').split(/\s+/).slice(0, 3).join(',');
 
+    // Step 1 — instant topic-relevant placeholder via LoremFlickr
     imgEl.onload  = () => imgEl.classList.add('loaded');
     imgEl.onerror = () => {
-      // Fallback: picsum with numeric seed if Flickr fails
       imgEl.src = `https://picsum.photos/seed/${idx + startIdx + 100}/1280/720`;
       imgEl.onerror = () => imgEl.classList.add('loaded');
     };
-    imgEl.src = flickrUrl;
+    imgEl.src = `https://loremflickr.com/1280/720/${encodeURIComponent(keywords)}?lock=${idx + startIdx}`;
 
-    // Step 2 — Pollinations AI swap (staggered 300 ms apart, 1024×576 for speed)
+    // Step 2 — Pollinations AI swap with richer description (staggered 300 ms)
     setTimeout(() => {
       const aiPrompt = encodeURIComponent(
-        `wide angle landscape scene, ${topic}, professional stock photography, cinematic lighting, vivid colors, high resolution, no text, no watermark, no portrait`
+        `wide angle landscape scene, ${desc}, professional stock photography, cinematic lighting, vivid colors, high resolution, no text, no watermark, no portrait`
       );
       const aiSeed = (idx + startIdx) * 37 + 1;
       const aiUrl  = `https://image.pollinations.ai/prompt/${aiPrompt}?width=1024&height=576&nologo=true&seed=${aiSeed}`;
@@ -331,7 +336,7 @@ function loadSlideImages(slides, startIdx = 0) {
         setTimeout(() => { imgEl.src = aiUrl; imgEl.style.opacity = '1'; }, 250);
       };
       aiImg.src = aiUrl;
-    }, i * 300); // 300 ms gap → 10 slides all queued within 3 s
+    }, i * 300);
   });
 }
 
@@ -623,9 +628,9 @@ function swapSlideImage(idx) {
   const imgEl = document.getElementById(`slide-img-${idx}`);
   if (!imgEl) return;
   const slide   = state.presData?.slides?.[idx];
-  const topic   = slide?.title || slide?.quote || '';
+  const desc    = slide ? _slideImgDesc(slide) : '';
   const newSeed = Math.floor(Math.random() * 9999);
-  const encoded = encodeURIComponent(`wide angle landscape scene, ${topic}, professional stock photography, cinematic lighting, vivid colors, no text, no watermark, no portrait`);
+  const encoded = encodeURIComponent(`wide angle landscape scene, ${desc}, professional stock photography, cinematic lighting, vivid colors, no text, no watermark, no portrait`);
   imgEl.classList.remove('loaded');
   imgEl.src = `https://image.pollinations.ai/prompt/${encoded}?width=1280&height=720&nologo=true&seed=${newSeed}`;
   imgEl.onload  = () => imgEl.classList.add('loaded');
