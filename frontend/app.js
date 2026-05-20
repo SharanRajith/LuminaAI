@@ -1095,7 +1095,8 @@ function updateNavForUser(isLoggedIn) {
     loginBtn.textContent  = 'Sign Out';
     loginBtn.onclick      = handleSignOut;
     fetchUserProfile();
-    const isAdmin = state.user?.email?.toLowerCase() === 'sharanrajithk@gmail.com';
+    const ADMIN_EMAILS = ['sharanrajithk@gmail.com', 'madhurahegde475@gmail.com'];
+    const isAdmin = ADMIN_EMAILS.includes(state.user?.email?.toLowerCase());
     if (adminBtn) adminBtn.style.display = isAdmin ? 'block' : 'none';
   } else {
     libBtn.style.display  = 'none';
@@ -1116,14 +1117,26 @@ async function fetchUserProfile() {
       headers: { 'Authorization': `Bearer ${session.access_token}` }
     });
     if (!res.ok) return;
+    const prevTier    = state.userProfile?.tier ?? null;
     state.userProfile = await res.json();
+    const isPremium   = state.userProfile.tier === 'premium';
     if (tierBadge) {
-      const isPremium = state.userProfile.tier === 'premium';
-      tierBadge.textContent  = isPremium ? '★ Premium' : `Free ${state.userProfile.generations_used}/${state.userProfile.limit}`;
-      tierBadge.className    = 'nav-tier-badge' + (isPremium ? ' nav-tier-premium' : '');
+      tierBadge.textContent   = isPremium ? '★ Premium' : `Free ${state.userProfile.generations_used}/${state.userProfile.limit}`;
+      tierBadge.className     = 'nav-tier-badge' + (isPremium ? ' nav-tier-premium' : '');
       tierBadge.style.display = 'inline-flex';
     }
+    // Show congratulations if this session just gained premium
+    if (isPremium && prevTier !== 'premium') {
+      setTimeout(() => showPremiumCongrats(), 400);
+    }
   } catch (_) {}
+}
+
+function showPremiumCongrats() {
+  document.getElementById('premium-congrats-modal').style.display = 'flex';
+}
+function closePremiumCongrats() {
+  document.getElementById('premium-congrats-modal').style.display = 'none';
 }
 
 function showUpgradeModal(used, limit) {

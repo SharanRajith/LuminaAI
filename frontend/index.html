@@ -109,6 +109,30 @@
     </div>
   </div>
 
+  <!-- ═══════════════════ PREMIUM CONGRATS MODAL ═══════════════════ -->
+  <div id="premium-congrats-modal" style="display:none;position:fixed;inset:0;z-index:9999;background:rgba(0,0,0,.75);backdrop-filter:blur(8px);align-items:center;justify-content:center;" role="dialog" aria-modal="true">
+    <div style="background:linear-gradient(135deg,#13132a,#1e1e40);border:1px solid rgba(255,199,0,.4);border-radius:24px;padding:44px 40px;max-width:420px;width:90%;text-align:center;position:relative;box-shadow:0 0 60px rgba(255,199,0,.12);">
+      <button onclick="closePremiumCongrats()" style="position:absolute;top:14px;right:16px;background:none;border:none;color:rgba(255,255,255,.4);font-size:1.5rem;cursor:pointer;" aria-label="Close">&times;</button>
+      <div style="font-size:3rem;margin-bottom:8px;">🎉</div>
+      <div style="font-size:1.5rem;margin-bottom:16px;">⭐</div>
+      <h2 style="color:#ffc700;font-size:1.5rem;font-weight:800;margin:0 0 10px;">Congratulations!</h2>
+      <p style="color:rgba(255,255,255,.75);font-size:1rem;margin:0 0 6px;">You've subscribed to <strong style="color:#ffc700;">Lumina AI Premium</strong>.</p>
+      <p style="color:rgba(255,255,255,.45);font-size:.88rem;margin:0 0 28px;">Enjoy unlimited presentations, reports, and all premium features.</p>
+      <div style="background:rgba(255,199,0,.08);border:1px solid rgba(255,199,0,.2);border-radius:14px;padding:16px 20px;margin-bottom:28px;text-align:left;">
+        <p style="color:#ffc700;font-weight:700;font-size:.85rem;margin:0 0 10px;">✨ Your Premium benefits:</p>
+        <ul style="color:rgba(255,255,255,.7);font-size:.85rem;margin:0;padding-left:18px;line-height:2;">
+          <li>Unlimited presentations &amp; reports</li>
+          <li>All themes &amp; 10 languages</li>
+          <li>Full PPTX / PDF / Word export</li>
+          <li>Priority generation speed</li>
+        </ul>
+      </div>
+      <button onclick="closePremiumCongrats(); navigateToCreate();" style="width:100%;background:linear-gradient(135deg,#ffc700,#ff9500);color:#000;font-weight:800;font-size:1rem;padding:14px;border:none;border-radius:12px;cursor:pointer;">
+        Start Creating →
+      </button>
+    </div>
+  </div>
+
   <!-- ═══════════════════ HOME ═══════════════════ -->
   <div id="screen-home" class="screen active">
     <section class="hero" aria-label="Hero">

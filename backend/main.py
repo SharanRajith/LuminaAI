@@ -295,11 +295,12 @@ def verify_token(authorization: Optional[str] = Header(None)) -> Optional[str]:
 
 FREE_TIER_LIMIT  = 5
 ADMIN_SECRET_KEY = os.environ.get("ADMIN_SECRET_KEY", "")
-ADMIN_EMAIL      = os.environ.get("ADMIN_EMAIL", "sharanrajithk@gmail.com")
+_ADMIN_EMAILS_RAW = os.environ.get("ADMIN_EMAILS", "sharanrajithk@gmail.com,madhurahegde475@gmail.com")
+ADMIN_EMAILS      = {e.strip().lower() for e in _ADMIN_EMAILS_RAW.split(",") if e.strip()}
 
 def _ensure_admin_premium(user_id: str, email: str):
     """If this user is the admin, silently upgrade their profile to premium."""
-    if email.lower() != ADMIN_EMAIL.lower():
+    if email.lower() not in ADMIN_EMAILS:
         return
     try:
         res = supabase.table("profiles").select("tier").eq("id", user_id).execute()
@@ -376,7 +377,7 @@ def verify_admin(authorization: Optional[str] = Header(None)) -> str:
     try:
         token = authorization.replace("Bearer ", "")
         user  = supabase.auth.get_user(token)
-        if user and user.user and (user.user.email or "").lower() == ADMIN_EMAIL.lower():
+        if user and user.user and (user.user.email or "").lower() in ADMIN_EMAILS:
             return user.user.id
     except Exception:
         pass
