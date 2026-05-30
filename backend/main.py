@@ -88,7 +88,7 @@ _VALID_LANGUAGES    = {
 
 class PresentationRequest(BaseModel):
     prompt: str = Field(..., min_length=1, max_length=5000)
-    context: Optional[str] = Field(None, max_length=12000)
+    context: Optional[str] = Field(None, max_length=100000)
     model_name: Optional[str] = None
     theme: str = Field("dark")
     slide_count: int = Field(10, ge=3, le=50)
@@ -127,7 +127,7 @@ class PresentationRequest(BaseModel):
 
 class ReportRequest(BaseModel):
     prompt: str = Field(..., min_length=1, max_length=5000)
-    context: Optional[str] = Field(None, max_length=12000)
+    context: Optional[str] = Field(None, max_length=100000)
     model_name: Optional[str] = None
     report_type: str = Field("business")
     tone: str = Field("professional")
@@ -255,21 +255,30 @@ def smart_truncate(text: str, max_chars: int = 6000) -> str:
     return window.rstrip()
 
 
-def generate_with_groq(prompt: str, model_name: Optional[str] = None):
+def generate_with_groq(
+    user_prompt: str,
+    model_name: Optional[str] = None,
+    system_prompt: Optional[str] = None,
+):
+    """Call Groq chat completions with optional system prompt separation."""
     api_key = os.environ.get("GROQ_API_KEY", "")
     if not api_key:
         raise ValueError("GROQ_API_KEY is not set. Get a free key at https://console.groq.com")
     model = model_name or "llama-3.3-70b-versatile"
+    messages = []
+    if system_prompt:
+        messages.append({"role": "system", "content": system_prompt})
+    messages.append({"role": "user", "content": user_prompt})
     response = requests.post(
         "https://api.groq.com/openai/v1/chat/completions",
         headers={"Authorization": f"Bearer {api_key}", "Content-Type": "application/json"},
         json={
             "model": model,
-            "messages": [{"role": "user", "content": prompt}],
+            "messages": messages,
             "response_format": {"type": "json_object"},
-            "temperature": 0.7,
+            "temperature": 0.65,
         },
-        timeout=60,
+        timeout=120,
     )
     if response.status_code != 200:
         raise ValueError(f"Groq API error {response.status_code}: {response.text}")
@@ -459,7 +468,7 @@ async def upload_document(file: UploadFile = File(...), _user_id: Optional[str] 
         raise
     except Exception as e:
         raise HTTPException(status_code=422, detail=f"Could not parse file: {e}")
-    text = text.strip()[:10000]
+    text = text.strip()[:95000]
     if not text:
         raise HTTPException(status_code=422, detail="No content could be extracted from this file.")
     is_image = ext in _IMAGE_EXTS
@@ -521,50 +530,53 @@ async def generate_presentation(req: PresentationRequest, request: Request, user
     check_tier_and_increment(user_id)
     try:
         lang_instruction = f"- Language: Write ALL content (titles, bullets, notes, subtitles) in {req.language.capitalize()}. Do NOT mix languages.\n" if req.language != "english" else ""
-        if req.context:
-            content_section = f"DOCUMENT CONTENT (base the presentation on this):\n{req.context[:8000]}\n\nUSER INSTRUCTIONS: {req.prompt}"
+
+        has_context = bool(req.context)
+        if has_context:
+            user_prompt = f"DOCUMENT CONTENT (base the presentation EXCLUSIVELY on this):\n{req.context[:95000]}\n\nUSER INSTRUCTIONS: {req.prompt}"
         else:
-            content_section = f"TOPIC: {req.prompt}"
-        prompt = f"""You are a senior consultant creating an authoritative, information-dense presentation. Think McKinsey-quality slide deck — every slide must deliver real, specific, actionable knowledge.
+            user_prompt = f"TOPIC: {req.prompt}"
 
-REQUIREMENTS:
-- Exactly {req.slide_count} slides
-- Audience: {req.audience}
-- Tone: {req.tone}
-{lang_instruction}
-CONTENT RULES (strictly follow):
-- Each content slide: 3-5 bullets. Every bullet must be 12-25 words with SPECIFIC facts, data, mechanisms, or named examples. No vague one-liners.
-- Include real numbers, percentages, timelines, statistics, or case examples wherever relevant.
+        system_prompt = f"""You are a senior McKinsey-level consultant creating an authoritative, information-dense presentation deck.
+
+STRICT RULES:
+- Produce EXACTLY {req.slide_count} slides.
+- Audience: {req.audience} | Tone: {req.tone}
+{lang_instruction}- Each content slide: 3-5 bullets, each 12-25 words with SPECIFIC facts, data, mechanisms, or named examples. No vague one-liners.
+- Include real numbers, percentages, timelines, and statistics wherever relevant.
 - NO quote slides — every slide must contain original analysis or factual information.
-- Stats slides: use realistic, specific numerical data with descriptive labels and context.
+- Stats slides: use specific numerical data with descriptive labels and context.
 - Conclusion: concrete, actionable takeaways — not vague summaries.
-- Agenda slide: list the actual section names of the presentation.
+- Agenda slide: list the actual section names of this presentation.
+{'- CRITICAL ACCURACY RULE: Base ALL information, statistics, and facts STRICTLY on the DOCUMENT CONTENT provided. Do NOT invent or hallucinate any data not present in the document.' if has_context else ''}
 
-IMAGE POSITIONING:
-- "full"  → ONLY for the title slide (full-bleed background image)
-- "right" → most content slides (image panel right, text left)
-- "left"  → use 1-2 times for visual variety
-- "none"  → agenda slide and stats slide (data looks cluttered with image)
+IMAGE RULES:
+- image_position: "full" ONLY for the title slide.
+- image_position: "right" for most content slides.
+- image_position: "left" for 1-2 slides for visual variety.
+- image_position: "none" for the agenda and stats slides.
+- image_prompt: Write a vivid, highly-specific 1-sentence description of the IDEAL photorealistic background image for each slide. Be concrete: mention setting, mood, lighting, subject. Example: "Aerial view of a modern smart city at dusk with illuminated roads and glowing skyscrapers, cinematic blue-hour lighting."
 
-{content_section}
-
-Return ONLY valid JSON. No markdown fences. No HTML or Markdown inside string values. Plain text only.
+Return ONLY valid JSON — no markdown fences, no HTML, no Markdown inside string values. Plain text only.
 
 {{
   "title": "...",
   "subtitle": "...",
   "theme": "{req.theme}",
   "slides": [
-    {{ "type": "title",     "title": "...", "subtitle": "...", "image_position": "full",  "notes": "Speaker intro note..." }},
-    {{ "type": "agenda",    "title": "Agenda", "items": ["Section 1", "Section 2", "Section 3"], "image_position": "none",  "notes": "..." }},
-    {{ "type": "content",   "title": "...", "bullets": ["Specific fact with detail and context, about 15 words here", "Another substantive point with real data or named example"], "image_position": "right", "notes": "..." }},
-    {{ "type": "stats",     "title": "...", "stats": [{{"value":"42%","label":"Adoption Rate","description":"Among Fortune 500 companies in 2024"}},{{"value":"3.2×","label":"ROI","description":"Average return within 18 months"}}], "image_position": "none",  "notes": "..." }},
-    {{ "type": "content",   "title": "...", "bullets": ["...", "..."], "image_position": "left",  "notes": "..." }},
-    {{ "type": "conclusion","title": "Key Takeaways", "bullets": ["Actionable takeaway with specific next step", "..."], "image_position": "right", "notes": "..." }}
+    {{ "type": "title",     "title": "...", "subtitle": "...", "image_position": "full",  "image_prompt": "Dramatic wide-angle aerial photograph of a global financial district at sunrise, long exposure light trails, golden hour.", "notes": "Speaker intro note..." }},
+    {{ "type": "agenda",    "title": "Agenda", "items": ["Section 1", "Section 2"], "image_position": "none", "image_prompt": "", "notes": "..." }},
+    {{ "type": "content",   "title": "...", "bullets": ["Specific fact with detail and context, about 15 words here", "Another substantive point with real data"], "image_position": "right", "image_prompt": "Close-up of engineers reviewing technical blueprints in a modern lab, sharp focus, cool white lighting.", "notes": "..." }},
+    {{ "type": "stats",     "title": "...", "stats": [{{"value":"42%","label":"Adoption Rate","description":"Among Fortune 500 companies in 2024"}},{{"value":"3.2x","label":"ROI","description":"Average return within 18 months"}}], "image_position": "none", "image_prompt": "", "notes": "..." }},
+    {{ "type": "conclusion","title": "Key Takeaways", "bullets": ["Actionable takeaway with specific next step", "..."], "image_position": "right", "image_prompt": "Motivated diverse team celebrating a successful product launch in a bright modern office, natural sunlight.", "notes": "..." }}
   ]
 }}"""
 
-        response_text = generate_with_groq(prompt, req.model_name)
+        response_text = generate_with_groq(
+            user_prompt=user_prompt,
+            model_name=req.model_name,
+            system_prompt=system_prompt,
+        )
         data = extract_json(response_text)
 
         if supabase and user_id:
@@ -593,28 +605,31 @@ async def generate_report(req: ReportRequest, request: Request, user_id: Optiona
     try:
         section_count = {"short": "4-5", "medium": "6-8", "long": "9-12"}.get(req.length, "6-8")
         lang_instruction = f"- Language: Write ALL content in {req.language.capitalize()}. Do NOT mix languages.\n" if req.language != "english" else ""
-        if req.context:
-            content_section = f"DOCUMENT CONTENT (base the report on this):\n{req.context[:8000]}\n\nUSER INSTRUCTIONS: {req.prompt}"
+
+        has_context = bool(req.context)
+        if has_context:
+            user_prompt = f"DOCUMENT CONTENT (base the report EXCLUSIVELY on this):\n{req.context[:95000]}\n\nUSER INSTRUCTIONS: {req.prompt}"
         else:
-            content_section = f"TOPIC: {req.prompt}"
+            user_prompt = f"TOPIC: {req.prompt}"
 
-        prompt = f"""You are an expert analyst and report writer.
-Write a comprehensive, authoritative {req.report_type} report on the topic below.
+        system_prompt = f"""You are an expert analyst and senior report writer producing a comprehensive, authoritative {req.report_type} report.
 
-REQUIREMENTS:
-- Tone: {req.tone}
-- Length: {section_count} sections
-{lang_instruction}- Include executive summary, body sections, conclusion, and recommendations
+STRICT RULES:
+- Tone: {req.tone} | Length: {section_count} sections
+{lang_instruction}- Include executive summary, detailed body sections, conclusion, and recommendations.
+- Every section must contain multiple substantive paragraphs with specific data, case examples, and analysis.
+- Do NOT use HTML tags or Markdown inside JSON values. Use plain text only.
+{'- CRITICAL ACCURACY RULE: Base ALL information, statistics, and facts STRICTLY on the DOCUMENT CONTENT provided. Do NOT invent or hallucinate any data not present in the document.' if has_context else ''}
 
-{content_section}
+- cover_image_prompt: Write a vivid, highly-specific 1-sentence description of an ideal photorealistic cover image representing this report's topic. Be concrete: mention subject, setting, mood, and lighting. Example: "Panoramic aerial view of a bustling global port with cargo ships and containers, sharp focus, overcast industrial lighting."
 
-Return ONLY valid JSON (no markdown fences) matching this schema exactly.
-CRITICAL: Do NOT use HTML tags (like <h1>) or Markdown inside JSON values. Use plain text only!
+Return ONLY valid JSON matching this schema exactly. No markdown fences.
 {{
   "title": "...",
   "subtitle": "...",
   "report_type": "{req.report_type}",
   "date": "May 2025",
+  "cover_image_prompt": "A vivid, photorealistic description of an ideal cover image for this report topic...",
   "executive_summary": "3-4 sentence summary of the entire report...",
   "key_highlights": [
     {{"label": "...", "value": "..."}}
@@ -633,7 +648,11 @@ CRITICAL: Do NOT use HTML tags (like <h1>) or Markdown inside JSON values. Use p
   "recommendations": ["Actionable recommendation 1", "...", "..."]
 }}"""
 
-        response_text = generate_with_groq(prompt, req.model_name)
+        response_text = generate_with_groq(
+            user_prompt=user_prompt,
+            model_name=req.model_name,
+            system_prompt=system_prompt,
+        )
         data = extract_json(response_text)
 
         if supabase and user_id:
@@ -655,13 +674,13 @@ CRITICAL: Do NOT use HTML tags (like <h1>) or Markdown inside JSON values. Use p
         raise HTTPException(status_code=500, detail=str(e))
 
 
+
 @app.post("/generate/slide")
 @limiter.limit("20/day")
 async def regenerate_slide(req: SlideRegenerateRequest, request: Request):
     """Regenerate a single slide — used by the inline editor."""
     try:
-        prompt = f"""You are an expert presentation designer.
-Regenerate ONE slide for a presentation titled "{req.presentation_title}".
+        user_prompt = f"""Regenerate ONE slide for a presentation titled "{req.presentation_title}".
 
 Slide topic: {req.topic}
 Slide type: {req.slide_type}
@@ -670,15 +689,16 @@ Tone: {req.tone}
 
 Return ONLY a single JSON slide object (no array, no wrapper). Use plain text only, no HTML or Markdown.
 Choose image_position from: "full" | "right" | "left" | "none"
+Always include an image_prompt: a vivid 1-sentence description of the ideal photorealistic background image for this slide.
 
-For type "content":  {{"type":"content","title":"...","bullets":["...","...","..."],"image_position":"right","notes":"..."}}
-For type "quote":    {{"type":"quote","quote":"...","author":"...","image_position":"full","notes":"..."}}
-For type "stats":    {{"type":"stats","title":"...","stats":[{{"value":"...","label":"...","description":"..."}}],"image_position":"full","notes":"..."}}
-For type "title":    {{"type":"title","title":"...","subtitle":"...","image_position":"full","notes":"..."}}
+For type "content":  {{"type":"content","title":"...","bullets":["...","...","..."],"image_position":"right","image_prompt":"...","notes":"..."}}
+For type "stats":    {{"type":"stats","title":"...","stats":[{{"value":"...","label":"...","description":"..."}}],"image_position":"none","image_prompt":"","notes":"..."}}
+For type "title":    {{"type":"title","title":"...","subtitle":"...","image_position":"full","image_prompt":"...","notes":"..."}}
 
 Make it substantive and engaging."""
 
-        response_text = generate_with_groq(prompt, None)
+        system_prompt = "You are an expert presentation designer. You ALWAYS return valid JSON with no markdown fences."
+        response_text = generate_with_groq(user_prompt=user_prompt, model_name=None, system_prompt=system_prompt)
         slide = extract_json(response_text)
         return slide
     except Exception as e:
@@ -745,24 +765,28 @@ async def export_pptx(req: ExportRequest, user_id: Optional[str] = Depends(verif
             add_rect(slide, Inches(0), Inches(7.3), Inches(13.33), Inches(0.2), BG2)
 
         async def fetch_image(sd: dict):
-            """Fetch a Pollinations AI image in a thread so the event loop isn't blocked."""
-            title   = sd.get("title", "")
-            bullets = sd.get("bullets", sd.get("items", []))
-            extra   = (bullets[0] if bullets else "")[:70]
-            desc    = f"{title}, {extra}" if extra else title
-            encoded_prompt = urllib.parse.quote(
-                f"wide angle landscape scene, {desc}, professional stock photography, "
-                f"cinematic lighting, high resolution, vivid colors, no text, no watermark, no portrait"
-            )
-            url = f"https://image.pollinations.ai/prompt/{encoded_prompt}?width=1280&height=720&nologo=true"
+            """Fetch a Pollinations AI image. Prefers the AI-generated image_prompt for precision."""
+            # Use the AI-crafted image_prompt if available; fall back to title+bullets
+            image_prompt = (sd.get("image_prompt") or "").strip()
+            if not image_prompt:
+                title   = sd.get("title", "")
+                bullets = sd.get("bullets", sd.get("items", []))
+                extra   = (bullets[0] if bullets else "")[:70]
+                image_prompt = f"{title}, {extra}" if extra else title
+                image_prompt = (
+                    f"wide angle landscape scene, {image_prompt}, professional stock photography, "
+                    f"cinematic lighting, high resolution, vivid colors, no text, no watermark, no portrait"
+                )
+            encoded_prompt = urllib.parse.quote(image_prompt)
+            url = f"https://image.pollinations.ai/prompt/{encoded_prompt}?width=1280&height=720&nologo=true&enhance=true"
 
             def _fetch():
                 try:
-                    r = requests.get(url, timeout=12)
+                    r = requests.get(url, timeout=20)
                     if r.status_code == 200:
                         return io.BytesIO(r.content)
                 except Exception as e:
-                    logger.warning("Image fetch failed for '%s': %s", title, e)
+                    logger.warning("Image fetch failed for '%s': %s", sd.get('title',''), e)
                 return None
 
             return await asyncio.to_thread(_fetch)
@@ -900,7 +924,7 @@ async def export_pptx(req: ExportRequest, user_id: Optional[str] = Depends(verif
         raise HTTPException(status_code=500, detail=str(e))
 
 
-def build_latex_source(data: dict, watermark: bool = True) -> str:
+def build_latex_source(data: dict, watermark: bool = True, cover_img_path: str = "") -> str:
     """Convert report JSON dict into a LaTeX document string."""
     def tex(s: str) -> str:
         for ch, rep in [("&","\\&"),("%","\\%"),("$","\\$"),("#","\\#"),
@@ -924,6 +948,7 @@ def build_latex_source(data: dict, watermark: bool = True) -> str:
         r"\usepackage[colorlinks=true,linkcolor=accent,urlcolor=accent]{hyperref}",
         r"\usepackage{fancyhdr}",
         r"\usepackage{parskip}",
+        r"\usepackage{graphicx}",
         r"\definecolor{accent}{RGB}{108,99,255}",
         r"\makeatletter",
         r"\renewcommand\section{\@startsection{section}{1}{\z@}{-3.5ex \@plus -1ex \@minus -.2ex}{2.3ex \@plus.2ex}{\Large\bfseries\color{accent}}}",
@@ -935,7 +960,17 @@ def build_latex_source(data: dict, watermark: bool = True) -> str:
         *([ r"\fancyfoot[R]{\small\textcolor{accent}{Made with Lumina AI}}" ] if watermark else []),
         r"\begin{document}",
         r"\begin{titlepage}\centering",
-        r"\vspace*{3cm}",
+        r"\vspace*{1cm}",
+    ]
+
+    # Embed cover image if provided
+    if cover_img_path:
+        safe_path = cover_img_path.replace("\\", "/")
+        lines.append(rf"\includegraphics[width=0.86\textwidth]{{{safe_path}}}\\[1.2cm]")
+    else:
+        lines.append(r"\vspace*{2cm}")
+
+    lines += [
         rf"{{\Huge\bfseries\color{{accent}} {title}}}\\[1cm]",
         rf"{{\Large\itshape {subtitle}}}\\[0.8cm]",
         rf"{{\large {date}}}",
@@ -943,6 +978,7 @@ def build_latex_source(data: dict, watermark: bool = True) -> str:
         r"\end{titlepage}",
         r"\tableofcontents\newpage",
     ]
+
 
     if data.get("executive_summary"):
         lines += [r"\section*{Executive Summary}",
@@ -1015,6 +1051,25 @@ def build_docx(data: dict, watermark: bool = True) -> io.BytesIO:
             fr.font.color.rgb = ACCENT
             fr.font.bold = True
 
+    # ── Cover image on title page ──────────────────────────────
+    cover_image_prompt = (data.get("cover_image_prompt") or "").strip()
+    if cover_image_prompt:
+        try:
+            encoded_cover = urllib.parse.quote(cover_image_prompt)
+            cover_url = (
+                f"https://image.pollinations.ai/prompt/{encoded_cover}"
+                f"?width=1600&height=900&nologo=true&enhance=true"
+            )
+            cover_resp = requests.get(cover_url, timeout=25)
+            if cover_resp.status_code == 200:
+                cover_io = io.BytesIO(cover_resp.content)
+                cp = doc.add_paragraph()
+                cp.alignment = WD_ALIGN_PARAGRAPH.CENTER
+                run = cp.add_run()
+                run.add_picture(cover_io, width=Inches(6.0))
+        except Exception as e:
+            logger.warning("Cover image fetch for DOCX failed: %s", e)
+
     # Title page
     tp = doc.add_paragraph()
     tp.alignment = WD_ALIGN_PARAGRAPH.CENTER
@@ -1043,6 +1098,7 @@ def build_docx(data: dict, watermark: bool = True) -> io.BytesIO:
     gr.font.color.rgb = RGBColor(0x88, 0x88, 0x88)
 
     doc.add_page_break()
+
 
     if data.get("executive_summary"):
         h = doc.add_heading("Executive Summary", level=1)
@@ -1129,10 +1185,32 @@ async def export_report_latex(req: ExportRequest, user_id: Optional[str] = Depen
 async def export_report_pdf(req: ExportRequest, user_id: Optional[str] = Depends(verify_token)):
     """Compile LaTeX → PDF with pdflatex and return the PDF."""
     try:
-        tex_src = build_latex_source(req.presentation_data, watermark=not _is_premium(user_id))
         name    = req.presentation_data.get("title", "report").replace(" ", "_")
 
         with tempfile.TemporaryDirectory() as tmpdir:
+            # Download cover image into tmpdir if available
+            cover_img_path = ""
+            cover_prompt = (req.presentation_data.get("cover_image_prompt") or "").strip()
+            if cover_prompt:
+                try:
+                    encoded_cover = urllib.parse.quote(cover_prompt)
+                    cover_url = (
+                        f"https://image.pollinations.ai/prompt/{encoded_cover}"
+                        f"?width=1600&height=900&nologo=true&enhance=true"
+                    )
+                    cov_resp = requests.get(cover_url, timeout=25)
+                    if cov_resp.status_code == 200:
+                        cover_img_path = os.path.join(tmpdir, "cover.jpg")
+                        with open(cover_img_path, "wb") as cf:
+                            cf.write(cov_resp.content)
+                except Exception as e:
+                    logger.warning("Cover image download for PDF failed: %s", e)
+
+            tex_src  = build_latex_source(
+                req.presentation_data,
+                watermark=not _is_premium(user_id),
+                cover_img_path=cover_img_path,
+            )
             tex_path = os.path.join(tmpdir, "report.tex")
             pdf_path = os.path.join(tmpdir, "report.pdf")
 
@@ -1161,6 +1239,7 @@ async def export_report_pdf(req: ExportRequest, user_id: Optional[str] = Depends
     except Exception as e:
         logger.exception("LaTeX PDF compilation failed")
         raise HTTPException(status_code=500, detail=str(e))
+
 
 
 

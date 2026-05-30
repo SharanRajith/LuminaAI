@@ -328,6 +328,8 @@ function renderPresentation(data) {
 }
 
 function _slideImgDesc(sd) {
+  // Prefer the AI-crafted image_prompt written directly in the slide JSON
+  if (sd.image_prompt && sd.image_prompt.trim()) return sd.image_prompt.trim();
   const title   = sd.title || sd.quote || 'nature';
   const bullets = sd.bullets || sd.items || [];
   const extra   = bullets[0] ? bullets[0].substring(0, 70) : '';
@@ -735,14 +737,35 @@ function renderReport(data) {
     ${data.recommendations?.length ? '<div class="toc-item" onclick="scrollToSection(\'recommendations\')">Recommendations</div>' : ''}
   `;
 
+  // Build cover image banner if cover_image_prompt is present
+  let coverBannerHtml = '';
+  if (data.cover_image_prompt && data.cover_image_prompt.trim()) {
+    const encodedCover = encodeURIComponent(data.cover_image_prompt.trim());
+    const coverSrc = `https://image.pollinations.ai/prompt/${encodedCover}?width=1600&height=600&nologo=true&enhance=true`;
+    coverBannerHtml = `
+      <div class="report-cover-banner" id="report-cover-banner">
+        <img class="report-cover-img" src="${coverSrc}" alt="Report cover image"
+             onload="this.classList.add('loaded')" onerror="this.closest('.report-cover-banner').style.display='none'">
+        <div class="report-cover-overlay"></div>
+        <div class="report-cover-text">
+          <div class="report-type-badge" style="margin-bottom:0.75rem">${esc(data.report_type || 'Report')}</div>
+          <h1 class="report-main-title" style="margin:0">${esc(data.title || 'Report')}</h1>
+          ${data.subtitle ? `<p class="report-subtitle" style="margin:0.5rem 0 0">${esc(data.subtitle)}</p>` : ''}
+          <div class="report-date" style="margin-top:0.5rem">${esc(data.date || '')}</div>
+        </div>
+      </div>`;
+  }
+
   const body    = document.getElementById('report-body');
   body.innerHTML = `
+    ${coverBannerHtml}
+    ${!coverBannerHtml ? `
     <div class="report-meta">
       <div class="report-type-badge">${esc(data.report_type || 'Report')}</div>
       <h1 class="report-main-title">${esc(data.title || 'Report')}</h1>
       ${data.subtitle ? `<p class="report-subtitle">${esc(data.subtitle)}</p>` : ''}
       <div class="report-date">${esc(data.date || '')}</div>
-    </div>
+    </div>` : ''}
 
     <div id="exec-summary" class="exec-summary">
       <div class="exec-label">Executive Summary</div>
@@ -795,6 +818,7 @@ function renderReport(data) {
     </div>` : ''}
   `;
 }
+
 
 function scrollToSection(id) {
   document.getElementById(id)?.scrollIntoView({ behavior: 'smooth', block: 'start' });
